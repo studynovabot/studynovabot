@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Define the message type
 type Message = {
-  role: "user" | "assistant";
+  role: string;
   content: string;
 };
 
