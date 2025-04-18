@@ -1,0 +1,36 @@
+body {
+  background: #f8f9fa;
+}
+
+.chat-bubble {
+  max-width: 70%;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  display: inline-block;
+  clear: both;
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background-color: var(--user-bubble, #d1e7dd);
+  float: right;
+}
+
+.chat-bubble.bot {
+  background-color: #e2e3e5;
+  float: left;
+}
+
+/* Custom shapes */
+[data-style="square"] {
+  border-radius: 4px !important;
+}
+
+[data-style="round"] {
+  border-radius: 12px !important;
+}
+
+[data-style="pill"] {
+  border-radius: 999px !important;
+}
