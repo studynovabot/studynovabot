@@ -17,7 +17,7 @@
     "jsx": "preserve",
     "baseUrl": "src",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["src/*"]
     },
     "noEmit": true,
     "incremental": true,
