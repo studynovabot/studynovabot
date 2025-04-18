@@ -1,0 +1,7 @@
+// Firestore structure (for guidance, not used directly in code)
+users (collection)
+  └─ {uid} (document)
+       ├─ email: string
+       ├─ xp: number
+       ├─ streak: number
+       ├─ notes: array
