@@ -1,59 +1,56 @@
-
-"use client";
-
+// components/chatBox.tsx
 import { useState, useRef } from "react";
+
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+};
 
 export default function ChatBox() {
   const [userInput, setUserInput] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const aiMessageRef = useRef("");
 
   const handleSend = async () => {
     if (!userInput.trim()) return;
-    const userMessage = { role: "user", content: userInput };
 
+    const userMessage: Message = { role: "user", content: userInput };
     setMessages((prev) => [...prev, userMessage]);
     setUserInput("");
     setIsLoading(true);
 
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: [...messages, userMessage] })
-    });
-
-    const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "No response";
-    aiMessageRef.current = text;
-
-    setMessages((prev) =>
-      [...prev, { role: "assistant", content: aiMessageRef.current }]
-    );
-    setIsLoading(false);
+    // Simulate AI response
+    setTimeout(() => {
+      const aiResponse: Message = {
+        role: "assistant",
+        content: "This is a simulated AI response."
+      };
+      setMessages((prev) => [...prev, aiResponse]);
+      setIsLoading(false);
+    }, 1000);
   };
 
   return (
-    <div className="bg-white p-4 rounded shadow max-w-2xl mx-auto">
-      <div className="mb-4 space-y-2 max-h-96 overflow-y-auto">
-        {messages.map((msg, i) => (
-          <div key={i} className={`p-2 rounded ${msg.role === "user" ? "bg-blue-100" : "bg-gray-100"}`}>
+    <div>
+      <div>
+        {messages.map((msg, index) => (
+          <div key={index}>
             <strong>{msg.role}:</strong> {msg.content}
           </div>
         ))}
-        {isLoading && <div className="italic text-gray-500">Bot is typing...</div>}
       </div>
-      <div className="flex space-x-2">
-        <input
-          className="flex-1 border p-2 rounded"
-          placeholder="Ask me anything..."
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-        />
-        <button onClick={handleSend} className="bg-blue-600 text-white px-4 py-2 rounded">
-          Send
-        </button>
-      </div>
+
+      <input
+        type="text"
+        value={userInput}
+        onChange={(e) => setUserInput(e.target.value)}
+        placeholder="Type your message..."
+      />
+
+      <button onClick={handleSend} disabled={isLoading}>
+        {isLoading ? "Sending..." : "Send"}
+      </button>
     </div>
   );
 }
