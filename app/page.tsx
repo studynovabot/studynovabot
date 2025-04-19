@@ -1,26 +1,28 @@
-import { useState, useRef, useEffect } from 'react'
-import ChatBubble from '../components/ChatBubble'
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import ChatBubble from '../components/ChatBubble';
 
 export default function Home() {
   const [messages, setMessages] = useState([
     { role: 'bot', content: 'Hi there! Ask me anything ✨' },
-  ])
-  const [input, setInput] = useState('')
-  const messagesEndRef = useRef(null)
+  ]);
+  const [input, setInput] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement | null>(null); // Added type to useRef
 
   const handleSend = () => {
-    if (!input.trim()) return
-    const newMessages = [...messages, { role: 'user', content: input }]
-    setMessages(newMessages)
-    setInput('')
+    if (!input.trim()) return;
+    const newMessages = [...messages, { role: 'user', content: input }];
+    setMessages(newMessages);
+    setInput('');
     setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'bot', content: 'You said: ' + input }])
-    }, 500)
-  }
+      setMessages((prev) => [...prev, { role: 'bot', content: 'You said: ' + input }]);
+    }, 500);
+  };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
@@ -48,5 +50,5 @@ export default function Home() {
         </button>
       </div>
     </div>
-  )
+  );
 }

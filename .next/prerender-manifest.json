@@ -1,6 +1,30 @@
 {
   "version": 4,
   "routes": {
+    "/dashboard": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "Next-Action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/dashboard",
+      "dataRoute": "/dashboard.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/": {
       "experimentalBypassFor": [
         {
@@ -72,37 +96,13 @@
         "x-next-revalidated-tags",
         "x-next-revalidate-tag-token"
       ]
-    },
-    "/dashboard": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "Next-Action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/dashboard",
-      "dataRoute": "/dashboard.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
     }
   },
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "264031d0e7f4ba4c4f996ca21ce1131c",
-    "previewModeSigningKey": "e7014ff327d85b175c1428e23e0d162f28bf7d8e7002815c7a20831c6826942e",
-    "previewModeEncryptionKey": "dffde4900330cc355b1b137501e2933825b98d9a1f7e280e59ce97882351ad56"
+    "previewModeId": "5c7644dd3936258f73eaba026c35c970",
+    "previewModeSigningKey": "40ec312d11eec4aadc09e41ca659ad202baab3f55b55ea043b8d73c52caa7513",
+    "previewModeEncryptionKey": "91729169bfc56291c5c597d8518776bfd052fc3f7e28e66a80e24e9dc2f143b8"
   }
 }
