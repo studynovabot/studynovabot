@@ -1,48 +1,80 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import axios from "axios";
 
-const GROQ_API_URL = process.env.GROQ_API_URL || "" ; // Set this in your .env file
-if (!GROQ_API_URL) {
-  throw new Error("GROQ_API_URL is not defined in the environmental variables.") 
-}
-const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
-if (!GROQ_API_KEY) {
-  throw new Error("GROQ_API_KEY is not defined in the environmental variables.");
-}
-
-import { NextApiRequest, NextApiResponse } from "next";
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
-    res.status(405).json({ error: "Method Not Allowed" });
-    return;
+    return res.status(405).json({ message: "Method Not Allowed" });
   }
 
-  // Add your main logic here...
-}
-  const { message } = req.body;
+  const { prompt } = req.body;
+
+  if (!prompt) {
+    return res.status(400).json({ message: "Prompt is required" });
+  }
+
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
 
   try {
-    // Send the message to Groq's API
-    const response = await axios.post(
-      GROQ_API_URL,
-      {
-        query: message, // Adjust as per Groq's API documentation
+    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        "Content-Type": "application/json",
       },
-      {
-        headers: {
-          Authorization: `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+      body: JSON.stringify({
+        model: "mixtral-8x7b-32768", // Or another Groq-supported model
+        messages: [
+          { role: "system", content: "You are a helpful assistant." },
+          { role: "user", content: prompt },
+        ],
+        stream: true,
+      }),
+    });
 
-    // Return the AI's response
-    res.status(200).json({ reply: response.data.reply });
+    if (!groqRes.ok || !groqRes.body) {
+      return res.status(500).json({ message: "Failed to connect to Groq API" });
+    }
+
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    });
+
+    const reader = groqRes.body.getReader();
+
+    const read = async () => {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n").filter((line) => line.trim().startsWith("data:"));
+
+        for (const line of lines) {
+          const json = line.replace(/^data:\s*/, "");
+          if (json === "[DONE]") {
+            res.write("data: [DONE]\n\n");
+            res.end();
+            return;
+          }
+
+          try {
+            const data = JSON.parse(json);
+            const token = data.choices?.[0]?.delta?.content;
+            if (token) {
+              res.write(`data: ${JSON.stringify(token)}\n\n`);
+            }
+          } catch (err) {
+            console.error("Error parsing JSON", err);
+          }
+        }
+      }
+    };
+
+    await read();
   } catch (error) {
     console.error("Error communicating with Groq API:", error);
-    res.status(500).json({ error: "Failed to fetch response from AI." });
+    res.status(500).json({ message: "Internal Server Error" });
   }
+}
