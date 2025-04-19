@@ -1,36 +1,40 @@
 {
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": false,
-    "noEmit": true,
-    "incremental": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
+    "target": "ES2017", // Specifies ECMAScript target version. ES2017 is good for modern apps.
+    "lib": ["dom", "dom.iterable", "esnext"], // Includes DOM and ESNext types.
+    "allowJs": true, // Allows JavaScript files to be imported.
+    "skipLibCheck": true, // Skips type checking of declaration files.
+    "strict": true, // Enables strict type-checking options.
+    "strictNullChecks": true, // Ensures null safety.
+    "noEmit": true, // Prevents emitting compiled files.
+    "incremental": true, // Enables incremental compilation for faster builds.
+    "esModuleInterop": true, // Ensures compatibility with CommonJS and ES modules.
+    "module": "esnext", // Specifies module code generation.
+    "moduleResolution": "node", // Resolves modules in Node.js style.
+    "resolveJsonModule": true, // Allows importing JSON files as modules.
+    "isolatedModules": true, // Ensures every file can be transpiled in isolation.
+    "jsx": "preserve", // Keeps JSX as-is for further transformation by Next.js.
     "plugins": [
       {
-        "name": "next"
+        "name": "next" // Enables Next.js-specific TypeScript support.
       }
     ],
-    "strictNullChecks": true,
-    "target": "ES2017"
+    "allowSyntheticDefaultImports": true, // Allows default imports from modules without default exports.
+    "forceConsistentCasingInFileNames": true, // Ensures file name casing consistency.
+    "baseUrl": ".", // Sets the base directory for resolving non-relative imports.
+    "paths": {
+      "@/*": ["./*"] // Simplifies imports using aliases (e.g., "@/components").
+    }
   },
   "include": [
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
-    "**/*.ts",
-    "**/*.tsx"
+    "next-env.d.ts", // Includes Next.js environment types.
+    ".next/types/**/*.ts", // Includes Next.js auto-generated types.
+    "**/*.ts", // Includes all TypeScript files.
+    "**/*.tsx" // Includes all TypeScript React files.
   ],
   "exclude": [
-    "node_modules"
+    "node_modules", // Excludes dependencies.
+    "**/*.test.ts", // Excludes test files if you're not running tests in production.
+    "**/*.test.tsx" // Excludes test files if you're not running tests in production.
   ]
 }
