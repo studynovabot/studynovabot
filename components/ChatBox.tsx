@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { PaperPlaneIcon } from "@radix-ui/react-icons";
-import { Message } from "@/components/type";
+import * as RadixIcons from "@radix-ui/react-icons";
+console.log(RadixIcons);
+import { Message } from "../components/type";
 
 export default function ChatBox() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -71,7 +72,7 @@ export default function ChatBox() {
           disabled={isLoading || !userInput.trim()}
           className="bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-1"
         >
-          <PaperPlaneIcon className="h-4 w-4" />
+          import {} from "@radix-ui/react-icons";
         </button>
       </div>
     </div>
