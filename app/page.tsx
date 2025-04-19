@@ -10,21 +10,35 @@ export default function Home() {
   ]); // State to manage chat messages
 
   // Function to handle sending messages
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return; // Prevent sending empty messages
-
+  
     // Add the user's message to the chat
     const newMessages = [...messages, { role: "user", content: input }];
     setMessages(newMessages);
     setInput(""); // Clear the input field
-
-    // Simulate bot response (this can be replaced with an API call)
-    setTimeout(() => {
+  
+    try {
+      // Call Groq API to get the AI's response
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }),
+      });
+      const data = await response.json();
+  
+      // Add the AI's response to the chat
       setMessages((prev) => [
         ...prev,
-        { role: "bot", content: `You said: ${input}` },
+        { role: "bot", content: data.reply || "No response from AI." },
       ]);
-    }, 500);
+    } catch (error) {
+      console.error("Error fetching response from Groq:", error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", content: "Error: Unable to fetch a response." },
+      ]);
+    }
   };
 
   useEffect(() => {
