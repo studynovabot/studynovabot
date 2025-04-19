@@ -1,50 +1,74 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import ChatBubble from '../components/ChatBubble';
+import React, { useEffect, useState } from "react";
+import { app } from "../firebase/firebase";
 
 export default function Home() {
+  const [input, setInput] = useState(""); // State to manage user input
   const [messages, setMessages] = useState([
-    { role: 'bot', content: 'Hi there! Ask me anything ✨' },
-  ]);
-  const [input, setInput] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement | null>(null); // Added type to useRef
+    { role: "bot", content: "Hi there! Ask me anything ✨" },
+  ]); // State to manage chat messages
 
+  // Function to handle sending messages
   const handleSend = () => {
-    if (!input.trim()) return;
-    const newMessages = [...messages, { role: 'user', content: input }];
+    if (!input.trim()) return; // Prevent sending empty messages
+
+    // Add the user's message to the chat
+    const newMessages = [...messages, { role: "user", content: input }];
     setMessages(newMessages);
-    setInput('');
+    setInput(""); // Clear the input field
+
+    // Simulate bot response (this can be replaced with an API call)
     setTimeout(() => {
-      setMessages((prev) => [...prev, { role: 'bot', content: 'You said: ' + input }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", content: `You said: ${input}` },
+      ]);
     }, 500);
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Scroll to the bottom of the chat when messages change
+    const chatContainer = document.getElementById("chat-container");
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      <header className="p-4 bg-white shadow text-xl font-bold text-gray-800">StudyNova AI</header>
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-        {messages.map((msg, i) => (
-          <ChatBubble key={i} message={msg} />
+    <div className="p-6 text-center">
+      <h1 className="text-4xl font-bold">Welcome to StudyNova Bot</h1>
+
+      {/* Chat Container */}
+      <div
+        id="chat-container"
+        className="border rounded p-4 my-4 h-64 overflow-y-auto"
+      >
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`my-2 ${
+              msg.role === "bot" ? "text-left text-blue-600" : "text-right text-gray-800"
+            }`}
+          >
+            {msg.content}
+          </div>
         ))}
-        <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 bg-white flex gap-2">
+
+      {/* Input and Send Button */}
+      <div className="flex items-center">
         <input
-          className="flex-1 border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="flex-1 border rounded-l px-4 py-2 focus:outline-none"
           type="text"
+          placeholder="Ask me anything..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          placeholder="Ask me anything..."
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
         <button
+          className="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700"
           onClick={handleSend}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Send
         </button>
