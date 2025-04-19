@@ -1,8 +1,1 @@
-# .gitignore
-
 node_modules
-.next
-dist
-.env
-*.log
-.DS_Store
