@@ -1,7 +1,7 @@
 // File: components/ui/input.tsx
-'use client';
+"use client";
 
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { InputHTMLAttributes, forwardRef } from "react";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {}
 
@@ -15,6 +15,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
   );
 });
 
-Input.displayName = 'Input';
+Input.displayName = "Input";
 
 export default Input;

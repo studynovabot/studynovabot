@@ -4,7 +4,7 @@ function updateBubbleStyle() {
 
   document.documentElement.style.setProperty("--user-bubble", color);
 
-  document.querySelectorAll(".chat-bubble.user").forEach(el => {
+  document.querySelectorAll(".chat-bubble.user").forEach((el) => {
     el.setAttribute("data-style", shape);
   });
 

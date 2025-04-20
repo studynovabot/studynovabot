@@ -7,11 +7,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { prompt } = req.body;
 
-  if (!prompt) {
-    return res.status(400).json({ message: "Prompt is required" });
+  if (!prompt || typeof prompt !== "string") {
+    return res.status(400).json({ message: "Invalid prompt provided. A valid string is required." });
   }
 
-  const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
   try {
@@ -27,54 +26,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           { role: "system", content: "You are a helpful assistant." },
           { role: "user", content: prompt },
         ],
-        stream: true,
+        stream: false, // Set to false if streaming is not required
       }),
     });
 
-    if (!groqRes.ok || !groqRes.body) {
+    if (!groqRes.ok) {
+      console.error("Groq API Error:", groqRes.statusText);
       return res.status(500).json({ message: "Failed to connect to Groq API" });
     }
 
-    res.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    });
+    const responseData = await groqRes.json();
 
-    const reader = groqRes.body.getReader();
-
-    const read = async () => {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n").filter((line) => line.trim().startsWith("data:"));
-
-        for (const line of lines) {
-          const json = line.replace(/^data:\s*/, "");
-          if (json === "[DONE]") {
-            res.write("data: [DONE]\n\n");
-            res.end();
-            return;
-          }
-
-          try {
-            const data = JSON.parse(json);
-            const token = data.choices?.[0]?.delta?.content;
-            if (token) {
-              res.write(`data: ${JSON.stringify(token)}\n\n`);
-            }
-          } catch (err) {
-            console.error("Error parsing JSON", err);
-          }
-        }
-      }
-    };
-
-    await read();
+    // Extract the AI's response from the API response
+    const reply = responseData.choices?.[0]?.message?.content || "No response from AI.";
+    res.status(200).json({ reply });
   } catch (error) {
     console.error("Error communicating with Groq API:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: "Internal Server Error. Please try again later." });
   }
 }

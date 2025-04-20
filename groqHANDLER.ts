@@ -33,7 +33,7 @@ export async function groqHandler(prompt: string): Promise<any> {
           Authorization: `Bearer ${GROQ_API_KEY}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {

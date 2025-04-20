@@ -12,12 +12,12 @@ export default function Home() {
   // Function to handle sending messages
   const handleSend = async () => {
     if (!input.trim()) return; // Prevent sending empty messages
-  
+
     // Add the user's message to the chat
     const newMessages = [...messages, { role: "user", content: input }];
     setMessages(newMessages);
     setInput(""); // Clear the input field
-  
+
     try {
       // Call Groq API to get the AI's response
       const response = await fetch("/api/chat", {
@@ -26,7 +26,7 @@ export default function Home() {
         body: JSON.stringify({ message: input }),
       });
       const data = await response.json();
-  
+
       // Add the AI's response to the chat
       setMessages((prev) => [
         ...prev,
@@ -56,16 +56,18 @@ export default function Home() {
       {/* Chat Container */}
       <div
         id="chat-container"
-        className="border rounded p-4 my-4 h-64 overflow-y-auto"
+        className="border rounded p-4 my-4 h-64 overflow-y-auto flex flex-col gap-2"
       >
         {messages.map((msg, index) => (
           <div
             key={index}
-            className={`my-2 ${
-              msg.role === "bot" ? "text-left text-blue-600" : "text-right text-gray-800"
+            className={`p-2 rounded-lg max-w-[70%] ${
+              msg.role === "bot"
+                ? "self-start bg-blue-100 text-blue-800"
+                : "self-end bg-gray-200 text-gray-800"
             }`}
           >
-            {msg.content}
+            <strong>{msg.role === "bot" ? "Bot" : "You"}:</strong> {msg.content}
           </div>
         ))}
       </div>

@@ -1,7 +1,6 @@
-
 "use client";
 
-import ChatBox from '@/components/ChatBox';
+import ChatBox from "@/components/ChatBox";
 
 export default function Page() {
   return (

@@ -1,19 +1,12 @@
-
-import "./globals.css";
-import Navbar from '@/components/Navbar';
-
 export const metadata = {
-  title: "StudyNova Bot",
-  description: "AI Study Assistant",
+  title: "Study Nova",
+  description: "This is my Next.js app",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <Navbar />
-        <main className="p-4">{children}</main>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

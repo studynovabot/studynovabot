@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import ChatBox from "../components/ChatBox";
 
 jest.mock("../lib/groq", () => ({
-  askGroq: jest.fn(() => Promise.resolve("Test response from AI"))
+  askGroq: jest.fn(() => Promise.resolve("Test response from AI")),
 }));
 
 describe("ChatBox", () => {

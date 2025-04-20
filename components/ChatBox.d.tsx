@@ -1,1 +1,1 @@
-declare module '@/components/ChatBox';
+declare module "@/components/ChatBox";

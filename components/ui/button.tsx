@@ -1,7 +1,7 @@
 // File: components/ui/button.tsx
-'use client';
+"use client";
 
-import { ButtonHTMLAttributes, forwardRef } from 'react';
+import { ButtonHTMLAttributes, forwardRef } from "react";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {}
 
@@ -15,6 +15,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
   );
 });
 
-Button.displayName = 'Button';
+Button.displayName = "Button";
 
 export default Button;
