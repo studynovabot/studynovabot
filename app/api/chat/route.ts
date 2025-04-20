@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const body = await req.json();
   const { messages } = body;
 
@@ -9,7 +9,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Use GROQ API or OpenAI API logic here (pull from .env)
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -17,7 +16,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "mixtral-8x7b-32768", // Replace with appropriate Groq model
+        model: "llama-3.1-8b-instant",
         messages,
       }),
     });
