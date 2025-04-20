@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "mixtral-8x7b-32768", // Or another Groq-supported model
+        model: "llama-3.1-8b-instant", // Updated to the desired model
         messages: [
           { role: "system", content: "You are a helpful assistant." },
           { role: "user", content: prompt },
