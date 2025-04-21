@@ -1,5 +1,7 @@
-const MessageParser = ({ children, actions }: any) => {
-  return children;
+export type MessageParserProps = {
+  message: string;
 };
 
-export default MessageParser;
+export default function MessageParser({ message }: MessageParserProps) {
+  // Implement message parsing logic here
+}

@@ -1,14 +1,7 @@
-'use client';
+import type { AppProps } from "next/app";
 
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from './theme';
-
-export default function App({ Component, pageProps }: any) {
-  return (
-    <ThemeProvider theme={theme}>
-      {/* CssBaseline ensures consistent styling across browsers */}
-      <CssBaseline />
-      <Component {...pageProps} />
-    </ThemeProvider>
-  );
+function MyApp({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />;
 }
+
+export default MyApp;

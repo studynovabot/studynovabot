@@ -1,21 +1,15 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method Not Allowed" });
   }
 
   const { prompt } = req.body;
 
-  if (!prompt || typeof prompt !== "string") {
-    return res.status(400).json({ message: "Invalid prompt: A non-empty string is required" });
+  if (!prompt) {
+    return res.status(400).json({ message: "Prompt is required" });
   }
-
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
 
   try {
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -25,7 +19,7 @@ export default async function handler(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile", // Updated model
+        model: "llama-3.1-8b-instant",
         messages: [
           { role: "system", content: "You are a helpful assistant." },
           { role: "user", content: prompt },
@@ -35,7 +29,6 @@ export default async function handler(
     });
 
     if (!groqRes.ok || !groqRes.body) {
-      console.error(`Groq API Error: ${groqRes.statusText}`);
       return res.status(500).json({ message: "Failed to connect to Groq API" });
     }
 
@@ -46,13 +39,14 @@ export default async function handler(
     });
 
     const reader = groqRes.body.getReader();
+    let done = false;
 
-    const read = async () => {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+    while (!done) {
+      const { value, done: readerDone } = await reader.read();
+      done = readerDone;
 
-        const chunk = decoder.decode(value, { stream: true });
+      if (value) {
+        const chunk = new TextDecoder().decode(value, { stream: true });
         const lines = chunk.split("\n").filter((line) => line.trim().startsWith("data:"));
 
         for (const line of lines) {
@@ -74,9 +68,7 @@ export default async function handler(
           }
         }
       }
-    };
-
-    await read();
+    }
   } catch (error) {
     console.error("Error communicating with Groq API:", error);
     res.status(500).json({ message: "Internal Server Error" });

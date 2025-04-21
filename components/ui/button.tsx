@@ -1,20 +1,8 @@
-// File: components/ui/button.tsx
-"use client";
+export interface ButtonProps {
+  label: string;
+  onClick: () => void;
+}
 
-import { ButtonHTMLAttributes, forwardRef } from "react";
-
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {}
-
-const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
-  return (
-    <button
-      ref={ref}
-      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
-      {...props}
-    />
-  );
-});
-
-Button.displayName = "Button";
-
-export default Button;
+export default function Button({ label, onClick }: ButtonProps) {
+  return <button onClick={onClick}>{label}</button>;
+}
