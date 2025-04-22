@@ -1,70 +1,78 @@
-import { useState } from "react";
-import { PaperPlaneIcon } from "@radix-ui/react-icons";
-import { Message } from "@/components/type";  // Ensure @components alias is set in tsconfig.json
+import React, { useState } from "react";
 
-export default function ChatBox() {
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
+
+const ChatBox: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [userInput, setUserInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [input, setInput] = useState("");
 
-  const handleSendMessage = async () => {
-    if (!userInput.trim()) return;
+  const sendMessage = async () => {
+    if (!input.trim()) return;
 
-    const userMessage: Message = { role: "user", content: userInput };
-    setMessages((prev) => [...prev, userMessage]);
-    setUserInput("");
-    setIsLoading(true);
+    // Add the user's message to the conversation
+    setMessages((prev) => [...prev, { role: "user", content: input }]);
 
     try {
-      const res = await fetch("/api/chat", {
+      // Send the message to the AI backend
+      const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, userMessage] }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt: input }),
       });
 
-      const data = await res.json();
-      if (data?.reply) {
-        const assistantMessage: Message = { role: "assistant", content: data.reply };
-        setMessages((prev) => [...prev, assistantMessage]);
-      }
+      const data = await response.json();
+
+      // Add the assistant's response to the conversation
+      setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
     } catch (error) {
       console.error("Error sending message:", error);
-    } finally {
-      setIsLoading(false);
+
+      // Show an error message
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Sorry, something went wrong. Please try again later." },
+      ]);
     }
+
+    // Clear the input field
+    setInput("");
   };
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-4 border rounded-2xl shadow-md">
-      <div className="space-y-4 max-h-96 overflow-y-auto">
-        {messages.map((msg, idx) => (
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
+      <h1>StudyNova Bot</h1>
+      <div style={{ border: "1px solid #ccc", padding: "10px", minHeight: "300px", marginBottom: "10px" }}>
+        {messages.map((msg, index) => (
           <div
-            key={idx}
-            className={`p-3 rounded-xl whitespace-pre-wrap ${
-              msg.role === "user" ? "bg-blue-100 text-right" : "bg-gray-100 text-left"
-            }`}
+            key={index}
+            style={{
+              textAlign: msg.role === "user" ? "right" : "left",
+              margin: "10px 0",
+            }}
           >
-            {msg.content}
+            <strong>{msg.role === "user" ? "You" : "Bot"}:</strong> {msg.content}
           </div>
         ))}
-        {isLoading && <div className="text-gray-400">Typing...</div>}
       </div>
-      <div className="flex gap-2 mt-4">
+      <div style={{ display: "flex", gap: "10px" }}>
         <input
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-          placeholder="Ask me anything..."
-          className="flex-1 border px-3 py-2 rounded"
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type your message..."
+          style={{ flex: 1, padding: "10px" }}
         />
-        <button
-          onClick={handleSendMessage}
-          disabled={isLoading || !userInput.trim()}
-          className="bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-1"
-        >
-          <PaperPlaneIcon className="h-4 w-4" />
+        <button onClick={sendMessage} style={{ padding: "10px 20px" }}>
+          Send
         </button>
       </div>
     </div>
   );
-}
+};
+
+export default ChatBox;
