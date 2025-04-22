@@ -1,85 +1,105 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
+import React, { useEffect, useState } from "react";
 
 export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(""); // State to manage user input
+  const [messages, setMessages] = useState([
+    { role: "assistant", content: "Hi there! Ask me anything ✨" },
+  ]); // State to manage chat messages
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  // Function to handle sending messages
+  const handleSend = async () => {
+    if (!input.trim()) return; // Prevent sending empty messages
 
-    setMessages((prev) => [...prev, { role: "user", content: input }]);
+    // Add the user's message to the messages array
+    const newMessages = [
+      ...messages,
+      { role: "user", content: input } // Ensure "role" is "user" for user messages
+    ];
+    setMessages(newMessages);
+    setInput(""); // Clear the input field
 
     try {
+      // Call the backend API to get the AI's response
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt: input }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages }), // Send the messages array
       });
 
       const data = await response.json();
 
-      setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
-    } catch (error) {
-      console.error("Error sending message:", error);
+      if (!response.ok) {
+        throw new Error(data.error || "Unknown error occurred");
+      }
+
+      // Add the AI's response to the messages array
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Sorry, something went wrong. Please try again." },
+        { role: "assistant", content: data.reply || "No response from AI." } // Ensure "role" is "assistant" for bot messages
+      ]);
+    } catch (error) {
+      console.error("Error fetching response from backend:", error);
+
+      const errorMessage =
+        (error instanceof Error && error.message) || "Unknown error occurred";
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: `Error: ${errorMessage}` },
       ]);
     }
-
-    setInput("");
   };
 
+  useEffect(() => {
+    // Scroll to the bottom of the chat when messages change
+    const chatContainer = document.getElementById("chat-container");
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  }, [messages]);
+
   return (
-    <div style={{ backgroundColor: "#0d0d0d", color: "white", minHeight: "100vh", padding: "20px" }}>
-      <div style={{ maxWidth: "600px", margin: "auto", backgroundColor: "#1a1a2e", padding: "20px", borderRadius: "10px" }}>
-        <h1 style={{ textAlign: "center", color: "#e94560" }}>Welcome to StudyNova Bot</h1>
-        <div
-          style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            minHeight: "300px",
-            marginBottom: "10px",
-            overflowY: "scroll",
-            backgroundColor: "#16213e",
-            color: "white",
-          }}
+    <div className="p-6 text-center bg-gray-900 text-white min-h-screen">
+      <h1 className="text-4xl font-bold text-blue-400">Welcome to StudyNova Bot</h1>
+
+      {/* Chat Container */}
+      <div
+        id="chat-container"
+        className="border rounded p-4 my-4 h-64 overflow-y-auto flex flex-col gap-2 bg-gray-800"
+      >
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`p-2 rounded-lg max-w-[70%] ${
+              msg.role === "assistant"
+                ? "self-start bg-blue-100 text-blue-800"
+                : "self-end bg-gray-200 text-gray-800"
+            }`}
+          >
+            <strong>{msg.role === "assistant" ? "Bot" : "You"}:</strong> {msg.content}
+          </div>
+        ))}
+      </div>
+
+      {/* Input and Send Button */}
+      <div className="flex items-center">
+        <input
+          id="user-input"
+          className="flex-1 border rounded-l px-4 py-2 focus:outline-none text-gray-900"
+          type="text"
+          placeholder="Ask me anything..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+        />
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700"
+          onClick={handleSend}
         >
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              style={{
-                textAlign: msg.role === "user" ? "right" : "left",
-                margin: "10px 0",
-              }}
-            >
-              <strong>{msg.role === "user" ? "You" : "Bot"}:</strong> {msg.content}
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <input
-            id="user-input"
-            name="userMessage"
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            style={{ flex: 1, padding: "10px", backgroundColor: "#0f3460", color: "white", border: "1px solid #ccc" }}
-          />
-          <button onClick={sendMessage} style={{ padding: "10px 20px", backgroundColor: "#e94560", color: "white", border: "none" }}>
-            Send
-          </button>
-        </div>
+          Send
+        </button>
       </div>
     </div>
   );
