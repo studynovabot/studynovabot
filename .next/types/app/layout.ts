@@ -1,4 +1,4 @@
-// File: E:\studynovabot-final\app\layout.tsx
+// File: E:\cascade\CascadeProjects\windsurf-project\studynovabot-final\app\layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
