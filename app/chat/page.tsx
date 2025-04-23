@@ -37,49 +37,52 @@ export default function ChatPage() {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center" }}>
-      <h1>Chat with StudyNova Bot</h1>
-      <div
-        style={{
-          border: "1px solid #ccc",
-          borderRadius: "8px",
-          padding: "10px",
-          height: "400px",
-          overflowY: "auto",
-          marginBottom: "20px",
-        }}
-      >
-        {messages.map((msg, index) => (
-          <div key={index} style={{ textAlign: msg.role === "user" ? "right" : "left", margin: "5px 0" }}>
-            <strong>{msg.role === "user" ? "You" : "Bot"}:</strong> {msg.content}
+    <div className="chat-container">
+      <h1 style={{ 
+        fontSize: '2rem', 
+        fontWeight: 600, 
+        marginBottom: '2rem',
+        textAlign: 'center',
+        color: 'var(--text-primary)'
+      }}>
+        💬 StudyNova Bot
+      </h1>
+      <div className="messages-container">
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
+          >
+            <div className="message-content">
+              {message.content}
+            </div>
           </div>
         ))}
       </div>
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "10px",
-          borderRadius: "4px",
-          border: "1px solid #ccc",
-          marginBottom: "10px",
-        }}
-      />
-      <button
-        onClick={handleSend}
-        style={{
-          padding: "10px 20px",
-          border: "none",
-          borderRadius: "4px",
-          background: "#007BFF",
-          color: "#fff",
-        }}
-      >
-        Send
-      </button>
+      <div className="input-container">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Type your message..."
+          className="chat-input"
+        />
+        <button
+          onClick={handleSend}
+          className="send-button"
+        >
+          Send
+        </button>
+      </div>
     </div>
   );
 }
