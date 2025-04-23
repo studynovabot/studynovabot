@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 type Message = {
   role: "user" | "assistant";
@@ -8,8 +8,17 @@ type Message = {
 };
 
 export default function ChatPage() {
-  const [input, setInput] = useState<string>(""); // State for user input
-  const [messages, setMessages] = useState<Message[]>([]); // State for chat messages
+  const [input, setInput] = useState<string>("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim()) return; // Prevent sending empty messages
@@ -46,15 +55,6 @@ export default function ChatPage() {
 
   return (
     <div className="chat-container">
-      <h1 style={{ 
-        fontSize: '2rem', 
-        fontWeight: 600, 
-        marginBottom: '2rem',
-        textAlign: 'center',
-        color: 'var(--text-primary)'
-      }}>
-        💬 StudyNova Bot
-      </h1>
       <div className="messages-container">
         {messages.map((message, index) => (
           <div
@@ -66,22 +66,28 @@ export default function ChatPage() {
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
       <div className="input-container">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Type your message..."
-          className="chat-input"
-        />
-        <button
-          onClick={handleSend}
-          className="send-button"
-        >
-          Send
-        </button>
+        <div className="input-wrapper">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Message StudyNova..."
+            className="chat-input"
+          />
+          <button
+            onClick={handleSend}
+            className="send-button"
+            disabled={!input.trim()}
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );
