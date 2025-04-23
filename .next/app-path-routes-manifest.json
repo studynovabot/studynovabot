@@ -1,11 +1,11 @@
 {
-  "/api/ocr/route": "/api/ocr",
-  "/_not-found/page": "/_not-found",
   "/api/chat/route": "/api/chat",
+  "/_not-found/page": "/_not-found",
+  "/api/ocr/route": "/api/ocr",
   "/api/genImage/route": "/api/genImage",
+  "/chat/page": "/chat",
   "/dashboard/page": "/dashboard",
   "/leaderboard/page": "/leaderboard",
-  "/chat/page": "/chat",
-  "/page": "/",
-  "/login/page": "/login"
+  "/login/page": "/login",
+  "/page": "/"
 }
