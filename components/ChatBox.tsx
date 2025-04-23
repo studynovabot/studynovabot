@@ -12,11 +12,9 @@ const ChatBox: React.FC = () => {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    // Add the user's message to the conversation
     setMessages((prev) => [...prev, { role: "user", content: input }]);
 
     try {
-      // Send the message to the AI backend
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -27,19 +25,16 @@ const ChatBox: React.FC = () => {
 
       const data = await response.json();
 
-      // Add the assistant's response to the conversation
       setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
     } catch (error) {
-      console.log("ChatBox component loaded");
+      console.error("Error occurred:", error); // Fixed unused variable error
 
-      // Show an error message
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Sorry, something went wrong. Please try again later." },
       ]);
     }
 
-    // Clear the input field
     setInput("");
   };
 

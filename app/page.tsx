@@ -8,24 +8,21 @@ export default function Home() {
     { role: "assistant", content: "Hi there! Ask me anything ✨" },
   ]); // State to manage chat messages
 
-  // Function to handle sending messages
   const handleSend = async () => {
-    if (!input.trim()) return; // Prevent sending empty messages
+    if (!input.trim()) return;
 
-    // Add the user's message to the messages array
     const newMessages = [
       ...messages,
-      { role: "user", content: input } // Ensure "role" is "user" for user messages
+      { role: "user", content: input },
     ];
     setMessages(newMessages);
-    setInput(""); // Clear the input field
+    setInput("");
 
     try {
-      // Call the backend API to get the AI's response
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }), // Send the messages array
+        body: JSON.stringify({ messages: newMessages }),
       });
 
       const data = await response.json();
@@ -34,13 +31,12 @@ export default function Home() {
         throw new Error(data.error || "Unknown error occurred");
       }
 
-      // Add the AI's response to the messages array
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.reply || "No response from AI." } // Ensure "role" is "assistant" for bot messages
+        { role: "assistant", content: data.reply || "No response from AI." },
       ]);
     } catch (error) {
-      console.log("Page rendered successfully");
+      console.error("Error occurred:", error); // Fixed unused variable error
 
       const errorMessage =
         (error instanceof Error && error.message) || "Unknown error occurred";
@@ -53,7 +49,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Scroll to the bottom of the chat when messages change
     const chatContainer = document.getElementById("chat-container");
     if (chatContainer) {
       chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -63,8 +58,6 @@ export default function Home() {
   return (
     <div className="p-6 text-center bg-gray-900 text-white min-h-screen">
       <h1 className="text-4xl font-bold text-blue-400">Welcome to StudyNova Bot</h1>
-
-      {/* Chat Container */}
       <div
         id="chat-container"
         className="border rounded p-4 my-4 h-64 overflow-y-auto flex flex-col gap-2 bg-gray-800"
@@ -82,8 +75,6 @@ export default function Home() {
           </div>
         ))}
       </div>
-
-      {/* Input and Send Button */}
       <div className="flex items-center">
         <input
           id="user-input"

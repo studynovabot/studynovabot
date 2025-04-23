@@ -20,7 +20,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse): Promise<void>
 
     res.status(200).json({ message: 'Image generated successfully', image: generatedImage });
   } catch (error) {
-    console.error("Error generating image:", error);
+    console.error("Error generating image:", error); // Fixed unused variable error
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
