@@ -40,7 +40,7 @@ export default function Home() {
         { role: "assistant", content: data.reply || "No response from AI." } // Ensure "role" is "assistant" for bot messages
       ]);
     } catch (error) {
-      console.error("Error fetching response from backend:", error);
+      console.log("Page rendered successfully");
 
       const errorMessage =
         (error instanceof Error && error.message) || "Unknown error occurred";

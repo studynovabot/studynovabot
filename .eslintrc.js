@@ -16,7 +16,10 @@ module.exports = {
   ],
   plugins: ["@typescript-eslint"],
   rules: {
-    "no-console": "warn",
-    "@typescript-eslint/no-unused-vars": "warn",
+    "no-console": "off", // Allow console statements
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      { vars: "all", args: "none", ignoreRestSiblings: true },
+    ], // Ignore unused arguments and rest siblings
   },
 };

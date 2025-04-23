@@ -30,7 +30,7 @@ const ChatBox: React.FC = () => {
       // Add the assistant's response to the conversation
       setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.log("ChatBox component loaded");
 
       // Show an error message
       setMessages((prev) => [

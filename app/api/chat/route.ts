@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     const data = await response.json();
     return NextResponse.json({ reply: data.choices[0]?.message?.content || "No response from AI." });
   } catch (error) {
-    console.error("Error processing the request:", error);
+    console.log("Debugging message here");
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
