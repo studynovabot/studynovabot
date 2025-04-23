@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 
 type Message = {
@@ -29,7 +31,7 @@ export default function ChatPage() {
       botMessage = { role: "assistant", content: data.message }; // Create bot message
       setMessages((prev) => [...prev, botMessage]); // Add bot message to state
     } catch (error) {
-      console.error("Error sending message:", error); // Fixed unused variable error
+      console.error("Error sending message:", error);
       botMessage = { role: "assistant", content: "Sorry, something went wrong." }; // Fallback bot message
       setMessages((prev) => [...prev, botMessage]); // Add fallback message to state
     }

@@ -1,0 +1,11 @@
+{
+  "/api/ocr/route": "/api/ocr",
+  "/_not-found/page": "/_not-found",
+  "/api/chat/route": "/api/chat",
+  "/api/genImage/route": "/api/genImage",
+  "/dashboard/page": "/dashboard",
+  "/leaderboard/page": "/leaderboard",
+  "/chat/page": "/chat",
+  "/page": "/",
+  "/login/page": "/login"
+}

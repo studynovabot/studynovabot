@@ -1,29 +1,29 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 
-// Define the POST handler for the API route
-const handler = async (req: NextApiRequest, res: NextApiResponse): Promise<void> => {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).json({ message: `Method ${req.method} Not Allowed` });
-  }
-
+export async function POST(req: NextRequest) {
   try {
-    // Example logic for generating an image
-    const { input } = req.body;
+    const body = await req.json();
+    const { input } = body;
 
     if (!input) {
-      return res.status(400).json({ message: 'Input is required' });
+      return NextResponse.json(
+        { message: 'Input is required' },
+        { status: 400 }
+      );
     }
 
     // Replace the following with your actual image generation logic
     const generatedImage = `Generated image for input: ${input}`;
 
-    res.status(200).json({ message: 'Image generated successfully', image: generatedImage });
+    return NextResponse.json(
+      { message: 'Image generated successfully', image: generatedImage },
+      { status: 200 }
+    );
   } catch (error) {
-    console.error("Error generating image:", error); // Fixed unused variable error
-    res.status(500).json({ message: 'Internal Server Error' });
+    console.error("Error generating image:", error);
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
-};
-
-// Export the handler with the expected type
-export default handler;
+}
