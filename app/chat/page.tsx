@@ -13,6 +13,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -21,6 +22,12 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (showWelcome) {
+      inputRef.current?.focus();
+    }
+  }, [showWelcome]);
 
   const handleSend = async () => {
     if (!input.trim()) return; // Prevent sending empty messages
@@ -78,7 +85,7 @@ export default function ChatPage() {
                 onKeyDown={handleKeyPress}
                 className="chat-input"
                 disabled={isLoading}
-                autoFocus
+                ref={inputRef}
               />
               <button
                 onClick={handleSend}
