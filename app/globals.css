@@ -70,20 +70,10 @@ body {
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
-  height: 100%;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
   background: var(--background-color);
   padding-top: calc(var(--header-height) + 4rem);
-}
-
-.welcome-container h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  background: linear-gradient(90deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 0;
-  line-height: 1.2;
 }
 
 .welcome-container h1 {
@@ -94,13 +84,10 @@ body {
 }
 
 .chat-container {
-  flex: 1;
   display: flex;
-  width: 100%;
-  height: 100%;
-  position: relative;
+  height: 100vh;
+  background-color: #1a1a1a;
   overflow: hidden;
-  background: var(--background-color);
 }
 
 .sidebar {
@@ -200,12 +187,11 @@ body {
 
 .messages-container {
   flex: 1;
+  padding: 20px;
   overflow-y: auto;
-  padding: var(--header-height) 0 0;
-  scroll-behavior: smooth;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
+  max-height: calc(100vh - 180px);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 .messages-container::-webkit-scrollbar {
