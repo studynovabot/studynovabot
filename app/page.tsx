@@ -45,7 +45,10 @@ export default function Home() {
     }
   };
 
-  const handleSend = async () => {
+  const handleSend = async (e: React.FormEvent | undefined = undefined) => {
+    if (e) {
+      e.preventDefault();
+    }
     if (!input.trim()) return;
 
     const newMessages: Message[] = [
@@ -209,7 +212,13 @@ export default function Home() {
                 <div ref={messagesEndRef} />
               </div>
               
-              <div className="input-container">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSend();
+                }}
+                className="input-container"
+              >
                 <div className="input-wrapper">
                   <input
                     type="text"
@@ -226,14 +235,14 @@ export default function Home() {
                     disabled={isLoading}
                   />
                   <button
-                    onClick={handleSend}
+                    type="submit"
                     disabled={!input.trim() || isLoading}
                     className="send-button"
                   >
                     {isLoading ? '...' : '→'}
                   </button>
                 </div>
-              </div>
+              </form>
             </div>
           )}
         </main>
