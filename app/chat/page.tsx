@@ -75,26 +75,50 @@ export default function ChatPage() {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <div className="welcome-container">
-        <h1>What can I help with?</h1>
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Ask anything"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            className="chat-input"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            className="send-button"
-          >
-            {isLoading ? '...' : '→'}
-          </button>
+      {messages.length === 0 ? (
+        <div className="welcome-container">
+          <h1>What can I help with?</h1>
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Ask anything..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              className="chat-input"
+              disabled={isLoading}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+              className="send-button"
+            >
+              {isLoading ? '...' : '→'}
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="input-container">
+          <div className="input-wrapper">
+            <input
+              type="text"
+              placeholder="Send a message..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              className="chat-input"
+              disabled={isLoading}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+              className="send-button"
+            >
+              {isLoading ? '...' : '→'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
