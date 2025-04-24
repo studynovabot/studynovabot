@@ -8,6 +8,7 @@ type Message = {
 };
 
 export default function ChatPage() {
+  const [showWelcome, setShowWelcome] = useState(true);
   const [input, setInput] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +26,7 @@ export default function ChatPage() {
     if (!input.trim()) return; // Prevent sending empty messages
 
     setIsLoading(true);
+    setShowWelcome(false);
     const userMessage: Message = { role: "user", content: input }; // User message object
     setMessages((prev) => [...prev, userMessage]); // Add user message to state
     setInput(""); // Clear input field
@@ -62,65 +64,84 @@ export default function ChatPage() {
       <header className="chat-header">
         <h1 className="site-title">Study Nova Bot</h1>
       </header>
-      {messages.length > 0 && (
-        <div className="messages-container">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
-            >
-              <div className="message-content">
-                {message.content}
+      
+      <main className="main-container">
+        {showWelcome ? (
+          <div className="welcome-container">
+            <h1>What can I help with?</h1>
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Ask anything..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                className="chat-input"
+                disabled={isLoading}
+                autoFocus
+              />
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || isLoading}
+                className="send-button"
+              >
+                {isLoading ? '...' : '→'}
+              </button>
+            </div>
+            <div className="suggestions">
+              <button className="suggestion-btn">
+                <span className="icon">🎨</span> Create image
+              </button>
+              <button className="suggestion-btn">
+                <span className="icon">💡</span> Brainstorm
+              </button>
+              <button className="suggestion-btn">
+                <span className="icon">✍️</span> Help me write
+              </button>
+              <button className="suggestion-btn">
+                <span className="icon">📝</span> Summarize text
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="chat-interface">
+            <div className="messages-container">
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
+                >
+                  <div className="message-content">
+                    {message.content}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+            
+            <div className="input-container">
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  placeholder="Send a message..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  className="chat-input"
+                  disabled={isLoading}
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || isLoading}
+                  className="send-button"
+                >
+                  {isLoading ? '...' : '→'}
+                </button>
               </div>
             </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-      )}
-      {messages.length === 0 ? (
-        <div className="welcome-container">
-          <h1>What can I help with?</h1>
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Ask anything..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyPress}
-              className="chat-input"
-              disabled={isLoading}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
-              className="send-button"
-            >
-              {isLoading ? '...' : '→'}
-            </button>
           </div>
-        </div>
-      ) : (
-        <div className="input-container">
-          <div className="input-wrapper">
-            <input
-              type="text"
-              placeholder="Send a message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyPress}
-              className="chat-input"
-              disabled={isLoading}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
-              className="send-button"
-            >
-              {isLoading ? '...' : '→'}
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 }
