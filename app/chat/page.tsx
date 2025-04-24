@@ -62,19 +62,21 @@ export default function ChatPage() {
       <header className="chat-header">
         <h1 className="site-title">Study Nova Bot</h1>
       </header>
-      <div className="messages-container">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
-          >
-            <div className="message-content">
-              {message.content}
+      {messages.length > 0 && (
+        <div className="messages-container">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
+            >
+              <div className="message-content">
+                {message.content}
+              </div>
             </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      )}
       {messages.length === 0 ? (
         <div className="welcome-container">
           <h1>What can I help with?</h1>
