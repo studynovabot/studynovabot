@@ -14,6 +14,82 @@ type Folder = {
   chats: Message[][];
 };
 
+// --- Typewriter animation and bot reply formatting helpers ---
+type Block = { type: 'image'; url: string } | { type: 'text'; content: string };
+
+function parseBotMessage(raw: string): Block[] {
+  // Split lines, look for bullet/number patterns, and image URLs
+  const lines = raw.split(/\r?\n/).filter(line => line.trim() !== '');
+  const blocks: Block[] = [];
+  for (let line of lines) {
+    // Simple image detection (e.g., if line contains [Image: ...](url) or starts with http...jpg/png)
+    const imgMatch = line.match(/!\[.*?\]\((.*?)\)/) || line.match(/(https?:\/\/\S+\.(jpg|jpeg|png|gif))/);
+    if (imgMatch) {
+      blocks.push({ type: 'image', url: imgMatch[1] || imgMatch[0] });
+      continue;
+    }
+    // Emoji-rich bullets/numbers
+    if (/^\d+[\.|\)]/.test(line)) {
+      // Numbered list
+      blocks.push({ type: 'text', content: `🔢 ${line.replace(/^\d+[\.|\)]\s*/, '')}` });
+    } else if (/^[-*•]/.test(line)) {
+      // Bullet list
+      blocks.push({ type: 'text', content: `👉 ${line.replace(/^[-*•]\s*/, '')}` });
+    } else {
+      // Add some default emoji for general lines
+      blocks.push({ type: 'text', content: `🤖 ${line}` });
+    }
+  }
+  return blocks;
+}
+
+function BotMessageRenderer({ message, animate }: { message: string, animate?: boolean }) {
+  const [displayed, setDisplayed] = React.useState<Array<string | { type: 'image'; url: string }>>([]);
+  const blocks = React.useMemo<Block[]>(() => parseBotMessage(message), [message]);
+  React.useEffect(() => {
+    if (!animate) {
+      const allBlocks: Array<string | { type: 'image'; url: string }> = [];
+      for (const b of blocks) {
+        if (b.type === 'text') {
+          allBlocks.push(b.content);
+        } else {
+          allBlocks.push({ type: 'image', url: b.url });
+        }
+      }
+      setDisplayed(allBlocks);
+      return;
+    }
+    setDisplayed([]);
+    let i = 0;
+    function showNext() {
+      if (i >= blocks.length) return;
+      const b = blocks[i];
+      if (b.type === 'text') {
+        setDisplayed(prev => [...prev, b.content]);
+      } else {
+        setDisplayed(prev => [...prev, { type: 'image', url: b.url }]);
+      }
+      i++;
+      setTimeout(showNext, 400);
+    }
+    showNext();
+  }, [message, animate]);
+
+  return (
+    <div>
+      {displayed.map((block, idx) =>
+        typeof block === 'string' ? (
+          <div key={idx} style={{whiteSpace: 'pre-line', marginBottom: 4}}>{block}</div>
+        ) : (
+          <div key={idx} style={{margin: '10px 0'}}>
+            <img src={block.url} alt="Generated visual" style={{maxWidth: '100%', borderRadius: 8}} />
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -70,10 +146,25 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Unknown error occurred");
+        let errorMsg = typeof data.error === "string" ? data.error : JSON.stringify(data.error);
+throw new Error(errorMsg || "Unknown error occurred");
       }
 
-      const newAssistantMessage = { role: "assistant" as const, content: data.reply || "No response from AI." };
+      // --- Image generation logic ---
+      let reply = data.reply || "No response from AI.";
+      // If reply looks like an image prompt or contains a special marker, call /api/genImage
+      if (/image|draw|picture|visual|photo|generate|create.*image/i.test(input) || /\[image\]/i.test(reply)) {
+        const imgRes = await fetch('/api/genImage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input }),
+        });
+        const imgData = await imgRes.json();
+        if (imgData && imgData.image) {
+          reply += `\n![Generated Image](${imgData.image})`;
+        }
+      }
+      const newAssistantMessage = { role: "assistant" as const, content: reply };
       const updatedMessages = [...messages, newAssistantMessage];
       setMessages(updatedMessages);
       
@@ -146,72 +237,29 @@ export default function Home() {
         </header>
         
         <main className="main-container">
-          {showWelcome ? (
-            <div className="welcome-container">
-              <h1>What can I help with?</h1>
-              <div className="search-box">
-                <input
-                  type="text"
-                  placeholder="Ask anything..."
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  className="chat-input"
-                  disabled={isLoading}
-                  ref={inputRef}
-                />
-                <button
-                  onClick={handleSend}
-                  disabled={!input.trim() || isLoading}
-                  className="send-button"
-                >
-                  {isLoading ? '...' : '→'}
-                </button>
-              </div>
-              <div className="suggestions">
-                <button 
-                  className="suggestion-btn"
-                  onClick={() => handleSuggestionClick("Create an image of a beautiful sunset over mountains")}>
-                  <span className="icon">🎨</span> Create image
-                </button>
-                <button 
-                  className="suggestion-btn"
-                  onClick={() => handleSuggestionClick("Help me brainstorm ideas for a science fiction story")}>
-                  <span className="icon">💡</span> Brainstorm
-                </button>
-                <button 
-                  className="suggestion-btn"
-                  onClick={() => handleSuggestionClick("Help me write a professional email to schedule a meeting")}>
-                  <span className="icon">✍️</span> Help me write
-                </button>
-                <button 
-                  className="suggestion-btn"
-                  onClick={() => handleSuggestionClick("Summarize this text: [paste your text here]")}>
-                  <span className="icon">📝</span> Summarize text
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="chat-interface">
+            <div className={`chat-interface${showWelcome ? ' welcome-mode' : ''}`}>
               <div className="messages-container">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
-                  >
-                    <div className="message-content">
-                      {message.content}
-                    </div>
+                {showWelcome ? (
+                  <div className="welcome-container">
+                    <h1>What can I help with?</h1>
                   </div>
-                ))}
+                ) : null}
+                {messages.map((message, index) => (
+  <div
+    key={index}
+    className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
+  >
+    <div className="message-content">
+      {message.role === 'assistant' ? (
+        <BotMessageRenderer message={message.content} animate={index === messages.length - 1 && isLoading} />
+      ) : (
+        message.content
+      )}
+    </div>
+  </div>
+))}
                 <div ref={messagesEndRef} />
               </div>
-              
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -233,6 +281,7 @@ export default function Home() {
                     }}
                     className="chat-input"
                     disabled={isLoading}
+                    ref={inputRef}
                   />
                   <button
                     type="submit"
@@ -244,9 +293,33 @@ export default function Home() {
                 </div>
               </form>
             </div>
-          )}
-        </main>
+            <div className="suggestions">
+                <button 
+                  className="suggestion-btn"
+                  onClick={() => handleSuggestionClick("Create an image of a beautiful sunset over mountains")}>
+                  <span className="icon">🎨</span> Create image
+                </button>
+                <button 
+                  className="suggestion-btn"
+                  onClick={() => handleSuggestionClick("Help me brainstorm ideas for a science fiction story")}
+                >
+                  <span className="icon">💡</span> Brainstorm
+                </button>
+                <button 
+                  className="suggestion-btn"
+                  onClick={() => handleSuggestionClick("Help me write a professional email to schedule a meeting")}
+                >
+                  <span className="icon">✍️</span> Help me write
+                </button>
+                <button 
+                  className="suggestion-btn"
+                  onClick={() => handleSuggestionClick("Summarize this text: [paste your text here]")}
+                >
+                  <span className="icon">📝</span> Summarize text
+                </button>
+              </div>
+           </main>
+        </div>
       </div>
-    </div>
   );
 }

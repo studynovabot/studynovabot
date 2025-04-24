@@ -32,21 +32,27 @@ export async function POST(req: Request) {
     }
 
     // Forward the request to the external AI service
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const response = await fetch(process.env.GROQ_API_URL!, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`, // Use your Groq API key
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant", // Replace with the correct model if needed
+        model: process.env.GROQ_MODEL!,
         messages,
       }),
     });
 
     // Handle external API errors
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData: any = {};
+      try {
+        errorData = await response.json();
+      } catch {
+        const errorText = await response.text();
+        errorData = { error: errorText };
+      }
       return NextResponse.json(
         { error: errorData.error || "Failed to fetch response from Groq API." },
         { status: response.status }
