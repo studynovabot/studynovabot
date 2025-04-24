@@ -10,6 +10,7 @@ type Message = {
 export default function ChatPage() {
   const [input, setInput] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -23,6 +24,7 @@ export default function ChatPage() {
   const handleSend = async () => {
     if (!input.trim()) return; // Prevent sending empty messages
 
+    setIsLoading(true);
     const userMessage: Message = { role: "user", content: input }; // User message object
     setMessages((prev) => [...prev, userMessage]); // Add user message to state
     setInput(""); // Clear input field
@@ -39,10 +41,12 @@ export default function ChatPage() {
       const data = await response.json();
       botMessage = { role: "assistant", content: data.message }; // Create bot message
       setMessages((prev) => [...prev, botMessage]); // Add bot message to state
+      setIsLoading(false);
     } catch (error) {
       console.error("Error sending message:", error);
       botMessage = { role: "assistant", content: "Sorry, something went wrong." }; // Fallback bot message
       setMessages((prev) => [...prev, botMessage]); // Add fallback message to state
+      setIsLoading(false);
     }
   };
 
@@ -55,6 +59,9 @@ export default function ChatPage() {
 
   return (
     <div className="chat-container">
+      <header className="chat-header">
+        <h1 className="site-title">Study Nova Bot</h1>
+      </header>
       <div className="messages-container">
         {messages.map((message, index) => (
           <div
@@ -68,24 +75,23 @@ export default function ChatPage() {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <div className="input-container">
-        <div className="input-wrapper">
+      <div className="welcome-container">
+        <h1>What can I help with?</h1>
+        <div className="search-box">
           <input
             type="text"
+            placeholder="Ask anything"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Message StudyNova..."
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             className="chat-input"
           />
           <button
             onClick={handleSend}
+            disabled={!input.trim() || isLoading}
             className="send-button"
-            disabled={!input.trim()}
           >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            {isLoading ? '...' : '→'}
           </button>
         </div>
       </div>
