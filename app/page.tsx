@@ -1,22 +1,61 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+type Folder = {
+  id: string;
+  name: string;
+  icon: string;
+  chats: Message[][];
+};
 
 export default function Home() {
-  const [input, setInput] = useState(""); // State to manage user input
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi there! Ask me anything ✨" },
-  ]); // State to manage chat messages
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeFolder, setActiveFolder] = useState<string>("all");
+  const [folders, setFolders] = useState<Folder[]>([
+    { id: "all", name: "All chats", icon: "📁", chats: [] },
+    { id: "study", name: "Study", icon: "📚", chats: [] },
+    { id: "code", name: "Code", icon: "💻", chats: [] },
+  ]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSuggestionClick = (prompt: string) => {
+    setInput(prompt);
+    inputRef.current?.focus();
+  };
+
+  const handleFolderClick = (folderId: string) => {
+    setActiveFolder(folderId);
+    const folder = folders.find(f => f.id === folderId);
+    if (folder && folder.chats.length > 0) {
+      setMessages(folder.chats[folder.chats.length - 1]);
+      setShowWelcome(false);
+    } else {
+      setMessages([]);
+      setShowWelcome(true);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    const newMessages = [
+    const newMessages: Message[] = [
       ...messages,
-      { role: "user", content: input },
+      { role: "user" as const, content: input },
     ];
     setMessages(newMessages);
     setInput("");
+    setShowWelcome(false);
+    setIsLoading(true);
 
     try {
       const response = await fetch("/api/chat", {
@@ -31,20 +70,41 @@ export default function Home() {
         throw new Error(data.error || "Unknown error occurred");
       }
 
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.reply || "No response from AI." },
-      ]);
+      const newAssistantMessage = { role: "assistant" as const, content: data.reply || "No response from AI." };
+      const updatedMessages = [...messages, newAssistantMessage];
+      setMessages(updatedMessages);
+      
+      // Update the current folder's chats
+      setFolders(prevFolders => {
+        return prevFolders.map(folder => {
+          if (folder.id === activeFolder) {
+            return {
+              ...folder,
+              chats: [...folder.chats, updatedMessages]
+            };
+          }
+          if (folder.id === 'all' && activeFolder !== 'all') {
+            return {
+              ...folder,
+              chats: [...folder.chats, updatedMessages]
+            };
+          }
+          return folder;
+        });
+      });
+      
+      setIsLoading(false);
     } catch (error) {
-      console.error("Error occurred:", error); // Fixed unused variable error
+      console.error("Error occurred:", error);
 
       const errorMessage =
         (error instanceof Error && error.message) || "Unknown error occurred";
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: `Error: ${errorMessage}` },
+        { role: "assistant" as const, content: `Error: ${errorMessage}` },
       ]);
+      setIsLoading(false);
     }
   };
 
@@ -56,41 +116,128 @@ export default function Home() {
   }, [messages]);
 
   return (
-    <div className="p-6 text-center bg-gray-900 text-white min-h-screen">
-      <h1 className="text-4xl font-bold text-blue-400">Welcome to StudyNova Bot</h1>
-      <div
-        id="chat-container"
-        className="border rounded p-4 my-4 h-64 overflow-y-auto flex flex-col gap-2 bg-gray-800"
-      >
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`p-2 rounded-lg max-w-[70%] ${
-              msg.role === "assistant"
-                ? "self-start bg-blue-100 text-blue-800"
-                : "self-end bg-gray-200 text-gray-800"
-            }`}
-          >
-            <strong>{msg.role === "assistant" ? "Bot" : "You"}:</strong> {msg.content}
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center">
-        <input
-          id="user-input"
-          className="flex-1 border rounded-l px-4 py-2 focus:outline-none text-gray-900"
-          type="text"
-          placeholder="Ask me anything..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-        />
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700"
-          onClick={handleSend}
-        >
-          Send
-        </button>
+    <div className="chat-container">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h2>Study Nova</h2>
+        </div>
+        <div className="folder-list">
+          {folders.map((folder) => (
+            <div
+              key={folder.id}
+              className={`folder ${activeFolder === folder.id ? 'active' : ''}`}
+              onClick={() => handleFolderClick(folder.id)}
+            >
+              <span className="folder-icon">{folder.icon}</span>
+              <span className="folder-name">{folder.name}</span>
+              {folder.chats.length > 0 && (
+                <span className="chat-count">{folder.chats.length}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </aside>
+      
+      <div className="main-content">
+        <header className="chat-header">
+          <h1 className="site-title">Study Nova Bot</h1>
+        </header>
+        
+        <main className="main-container">
+          {showWelcome ? (
+            <div className="welcome-container">
+              <h1>What can I help with?</h1>
+              <div className="search-box">
+                <input
+                  type="text"
+                  placeholder="Ask anything..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  className="chat-input"
+                  disabled={isLoading}
+                  ref={inputRef}
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || isLoading}
+                  className="send-button"
+                >
+                  {isLoading ? '...' : '→'}
+                </button>
+              </div>
+              <div className="suggestions">
+                <button 
+                  className="suggestion-btn"
+                  onClick={() => handleSuggestionClick("Create an image of a beautiful sunset over mountains")}>
+                  <span className="icon">🎨</span> Create image
+                </button>
+                <button 
+                  className="suggestion-btn"
+                  onClick={() => handleSuggestionClick("Help me brainstorm ideas for a science fiction story")}>
+                  <span className="icon">💡</span> Brainstorm
+                </button>
+                <button 
+                  className="suggestion-btn"
+                  onClick={() => handleSuggestionClick("Help me write a professional email to schedule a meeting")}>
+                  <span className="icon">✍️</span> Help me write
+                </button>
+                <button 
+                  className="suggestion-btn"
+                  onClick={() => handleSuggestionClick("Summarize this text: [paste your text here]")}>
+                  <span className="icon">📝</span> Summarize text
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="chat-interface">
+              <div className="messages-container">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
+                  >
+                    <div className="message-content">
+                      {message.content}
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+              
+              <div className="input-container">
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    placeholder="Send a message..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    className="chat-input"
+                    disabled={isLoading}
+                  />
+                  <button
+                    onClick={handleSend}
+                    disabled={!input.trim() || isLoading}
+                    className="send-button"
+                  >
+                    {isLoading ? '...' : '→'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

@@ -68,11 +68,32 @@ export default function ChatPage() {
 
   return (
     <div className="chat-container">
-      <header className="chat-header">
-        <h1 className="site-title">Study Nova Bot</h1>
-      </header>
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h2>Study Nova</h2>
+        </div>
+        <div className="folder-list">
+          <div className="folder">
+            <span className="folder-icon">📁</span>
+            <span className="folder-name">All chats</span>
+          </div>
+          <div className="folder">
+            <span className="folder-icon">📚</span>
+            <span className="folder-name">Study</span>
+          </div>
+          <div className="folder">
+            <span className="folder-icon">💻</span>
+            <span className="folder-name">Code</span>
+          </div>
+        </div>
+      </aside>
       
-      <main className="main-container">
+      <div className="main-content">
+        <header className="chat-header">
+          <h1 className="site-title">Study Nova Bot</h1>
+        </header>
+        
+        <main className="main-container">
         {showWelcome ? (
           <div className="welcome-container">
             <h1>What can I help with?</h1>
@@ -149,6 +170,7 @@ export default function ChatPage() {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 }
