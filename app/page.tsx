@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from "react";
+import Image from "next/image"; // ✅ Optimized image
 
 type Message = {
   role: "user" | "assistant";
@@ -14,29 +15,22 @@ type Folder = {
   chats: Message[][];
 };
 
-// --- Typewriter animation and bot reply formatting helpers ---
 type Block = { type: 'image'; url: string } | { type: 'text'; content: string };
 
 function parseBotMessage(raw: string): Block[] {
-  // Split lines, look for bullet/number patterns, and image URLs
   const lines = raw.split(/\r?\n/).filter(line => line.trim() !== '');
   const blocks: Block[] = [];
   for (const line of lines) {
-    // Simple image detection (e.g., if line contains [Image: ...](url) or starts with http...jpg/png)
     const imgMatch = line.match(/!\[.*?\]\((.*?)\)/) || line.match(/(https?:\/\/\S+\.(jpg|jpeg|png|gif))/);
     if (imgMatch) {
       blocks.push({ type: 'image', url: imgMatch[1] || imgMatch[0] });
       continue;
     }
-    // Emoji-rich bullets/numbers
     if (/^\d+[.)]/.test(line)) {
-      // Numbered list
       blocks.push({ type: 'text', content: `🔢 ${line.replace(/^\d+[.)]\s*/, '')}` });
     } else if (/^[-*•]/.test(line)) {
-      // Bullet list
       blocks.push({ type: 'text', content: `👉 ${line.replace(/^[-*•]\s*/, '')}` });
     } else {
-      // Add some default emoji for general lines
       blocks.push({ type: 'text', content: `🤖 ${line}` });
     }
   }
@@ -46,16 +40,10 @@ function parseBotMessage(raw: string): Block[] {
 function BotMessageRenderer({ message, animate }: { message: string, animate?: boolean }) {
   const [displayed, setDisplayed] = React.useState<Array<string | { type: 'image'; url: string }>>([]);
   const blocks = React.useMemo<Block[]>(() => parseBotMessage(message), [message]);
-  React.useEffect(() => {
+
+  useEffect(() => {
     if (!animate) {
-      const allBlocks: Array<string | { type: 'image'; url: string }> = [];
-      for (const b of blocks) {
-        if (b.type === 'text') {
-          allBlocks.push(b.content);
-        } else {
-          allBlocks.push({ type: 'image', url: b.url });
-        }
-      }
+      const allBlocks = blocks.map(b => b.type === 'text' ? b.content : { type: 'image', url: b.url });
       setDisplayed(allBlocks);
       return;
     }
@@ -64,26 +52,21 @@ function BotMessageRenderer({ message, animate }: { message: string, animate?: b
     function showNext() {
       if (i >= blocks.length) return;
       const b = blocks[i];
-      if (b.type === 'text') {
-        setDisplayed(prev => [...prev, b.content]);
-      } else {
-        setDisplayed(prev => [...prev, { type: 'image', url: b.url }]);
-      }
+      setDisplayed(prev => [...prev, b.type === 'text' ? b.content : { type: 'image', url: b.url }]);
       i++;
       setTimeout(showNext, 400);
     }
     showNext();
-  }, [message, animate]);
+  }, [blocks, animate]);
 
   return (
     <div>
       {displayed.map((block, idx) =>
         typeof block === 'string' ? (
-          <div key={idx} style={{whiteSpace: 'pre-line', marginBottom: 4}}>{block}</div>
+          <div key={idx} style={{ whiteSpace: 'pre-line', marginBottom: 4 }}>{block}</div>
         ) : (
-          <div key={idx} style={{margin: '10px 0'}}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={block.url} alt="Generated visual" style={{maxWidth: '100%', borderRadius: 8}} />
+          <div key={idx} style={{ margin: '10px 0' }}>
+            <Image src={block.url} alt="Generated visual" width={600} height={400} style={{ maxWidth: '100%', borderRadius: 8 }} />
           </div>
         )
       )}
@@ -130,7 +113,7 @@ export default function Home() {
 
     const newMessages: Message[] = [
       ...messages,
-      { role: "user" as const, content: input },
+      { role: "user", content: input },
     ];
     setMessages(newMessages);
     setInput("");
@@ -151,9 +134,7 @@ export default function Home() {
         throw new Error(errorMsg || "Unknown error occurred");
       }
 
-      // --- Image generation logic ---
       let reply = data.reply || "No response from AI.";
-      // If reply looks like an image prompt or contains a special marker, call /api/genImage
       if (/image|draw|picture|visual|photo|generate|create.*image/i.test(input) || /\[image\]/i.test(reply)) {
         const imgRes = await fetch('/api/genImage', {
           method: 'POST',
@@ -165,20 +146,14 @@ export default function Home() {
           reply += `\n![Generated Image](${imgData.image})`;
         }
       }
-      const newAssistantMessage = { role: "assistant" as const, content: reply };
+
+      const newAssistantMessage = { role: "assistant", content: reply };
       const updatedMessages = [...messages, newAssistantMessage];
       setMessages(updatedMessages);
-      
-      // Update the current folder's chats
+
       setFolders(prevFolders => {
         return prevFolders.map(folder => {
-          if (folder.id === activeFolder) {
-            return {
-              ...folder,
-              chats: [...folder.chats, updatedMessages]
-            };
-          }
-          if (folder.id === 'all' && activeFolder !== 'all') {
+          if (folder.id === activeFolder || (folder.id === 'all' && activeFolder !== 'all')) {
             return {
               ...folder,
               chats: [...folder.chats, updatedMessages]
@@ -187,17 +162,14 @@ export default function Home() {
           return folder;
         });
       });
-      
+
       setIsLoading(false);
     } catch (error) {
       console.error("Error occurred:", error);
-
-      const errorMessage =
-        (error instanceof Error && error.message) || "Unknown error occurred";
-
-      setMessages((prev) => [
+      const errorMessage = (error instanceof Error && error.message) || "Unknown error occurred";
+      setMessages(prev => [
         ...prev,
-        { role: "assistant" as const, content: `Error: ${errorMessage}` },
+        { role: "assistant", content: `Error: ${errorMessage}` },
       ]);
       setIsLoading(false);
     }
@@ -231,96 +203,96 @@ export default function Home() {
           ))}
         </div>
       </aside>
-      
+
       <div className="main-content">
         <header className="chat-header">
           <h1 className="site-title">Study Nova Bot</h1>
         </header>
-        
+
         <main className="main-container">
-            <div className={`chat-interface${showWelcome ? ' welcome-mode' : ''}`}>
-              <div className="messages-container">
-                {showWelcome ? (
-                  <div className="welcome-container">
-                    <h1>What can I help with?</h1>
-                  </div>
-                ) : null}
-                {messages.map((message, index) => (
-  <div
-    key={index}
-    className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
-  >
-    <div className="message-content">
-      {message.role === 'assistant' ? (
-        <BotMessageRenderer message={message.content} animate={index === messages.length - 1 && isLoading} />
-      ) : (
-        message.content
-      )}
-    </div>
-  </div>
-))}
-                <div ref={messagesEndRef} />
-              </div>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSend();
-                }}
-                className="input-container"
-              >
-                <div className="input-wrapper">
-                  <input
-                    type="text"
-                    placeholder="Send a message..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    className="chat-input"
-                    disabled={isLoading}
-                    ref={inputRef}
-                  />
-                  <button
-                    type="submit"
-                    disabled={!input.trim() || isLoading}
-                    className="send-button"
-                  >
-                    {isLoading ? '...' : '→'}
-                  </button>
+          <div className={`chat-interface${showWelcome ? ' welcome-mode' : ''}`}>
+            <div className="messages-container">
+              {showWelcome ? (
+                <div className="welcome-container">
+                  <h1>What can I help with?</h1>
                 </div>
-              </form>
+              ) : null}
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
+                >
+                  <div className="message-content">
+                    {message.role === 'assistant' ? (
+                      <BotMessageRenderer message={message.content} animate={index === messages.length - 1 && isLoading} />
+                    ) : (
+                      message.content
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
             </div>
-            <div className="suggestions">
-                <button 
-                  className="suggestion-btn"
-                  onClick={() => handleSuggestionClick("Create an image of a beautiful sunset over mountains")}>
-                  <span className="icon">🎨</span> Create image
-                </button>
-                <button 
-                  className="suggestion-btn"
-                  onClick={() => handleSuggestionClick("Help me brainstorm ideas for a science fiction story")}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSend();
+              }}
+              className="input-container"
+            >
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  placeholder="Send a message..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  className="chat-input"
+                  disabled={isLoading}
+                  ref={inputRef}
+                />
+                <button
+                  type="submit"
+                  disabled={!input.trim() || isLoading}
+                  className="send-button"
                 >
-                  <span className="icon">💡</span> Brainstorm
-                </button>
-                <button 
-                  className="suggestion-btn"
-                  onClick={() => handleSuggestionClick("Help me write a professional email to schedule a meeting")}
-                >
-                  <span className="icon">✍️</span> Help me write
-                </button>
-                <button 
-                  className="suggestion-btn"
-                  onClick={() => handleSuggestionClick("Summarize this text: [paste your text here]")}
-                >
-                  <span className="icon">📝</span> Summarize text
+                  {isLoading ? '...' : '→'}
                 </button>
               </div>
-           </main>
-        </div>
+            </form>
+          </div>
+          <div className="suggestions">
+            <button 
+              className="suggestion-btn"
+              onClick={() => handleSuggestionClick("Create an image of a beautiful sunset over mountains")}>
+              <span className="icon">🎨</span> Create image
+            </button>
+            <button 
+              className="suggestion-btn"
+              onClick={() => handleSuggestionClick("Help me brainstorm ideas for a science fiction story")}
+            >
+              <span className="icon">💡</span> Brainstorm
+            </button>
+            <button 
+              className="suggestion-btn"
+              onClick={() => handleSuggestionClick("Help me write a professional email to schedule a meeting")}
+            >
+              <span className="icon">✍️</span> Help me write
+            </button>
+            <button 
+              className="suggestion-btn"
+              onClick={() => handleSuggestionClick("Summarize this text: [paste your text here]")}
+            >
+              <span className="icon">📝</span> Summarize text
+            </button>
+          </div>
+        </main>
       </div>
+    </div>
   );
 }
