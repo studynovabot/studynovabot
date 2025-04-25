@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
     // Handle external API errors
     if (!response.ok) {
-      let errorData: { error?: string } = {};
+      let errorData: GroqError = { error: undefined };
       try {
         const rawErr: unknown = await response.json();
         errorData = rawErr as GroqError;
