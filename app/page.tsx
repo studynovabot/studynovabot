@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from "react";
-import Image from "next/image"; // ✅ Optimized image
+import Image from "next/image";
 
 type Message = {
   role: "user" | "assistant";
@@ -21,7 +21,7 @@ function parseBotMessage(raw: string): Block[] {
   const lines = raw.split(/\r?\n/).filter(line => line.trim() !== '');
   const blocks: Block[] = [];
   for (const line of lines) {
-    const imgMatch = line.match(/!\[.*?\]\((.*?)\)/) || line.match(/(https?:\/\/\S+\.(jpg|jpeg|png|gif))/);
+    const imgMatch = line.match(/!\[.*?]\((.*?)\)/) || line.match(/(https?:\/\/\S+\.(jpg|jpeg|png|gif))/);
     if (imgMatch) {
       blocks.push({ type: 'image', url: imgMatch[1] || imgMatch[0] });
       continue;
@@ -43,7 +43,7 @@ function BotMessageRenderer({ message, animate }: { message: string, animate?: b
 
   useEffect(() => {
     if (!animate) {
-      const allBlocks = blocks.map(b => b.type === 'text' ? b.content : { type: 'image', url: b.url });
+      const allBlocks: Array<string | { type: 'image'; url: string }> = blocks.map(b => b.type === 'text' ? b.content : { type: 'image', url: b.url });
       setDisplayed(allBlocks);
       return;
     }
@@ -57,7 +57,7 @@ function BotMessageRenderer({ message, animate }: { message: string, animate?: b
       setTimeout(showNext, 400);
     }
     showNext();
-  }, [blocks, animate]);
+  }, [blocks, animate]); // ✅ blocks added to dependencies
 
   return (
     <div>
@@ -105,16 +105,11 @@ export default function Home() {
     }
   };
 
-  const handleSend = async (e: React.FormEvent | undefined = undefined) => {
-    if (e) {
-      e.preventDefault();
-    }
+  const handleSend = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!input.trim()) return;
 
-    const newMessages: Message[] = [
-      ...messages,
-      { role: "user", content: input },
-    ];
+    const newMessages: Message[] = [...messages, { role: "user", content: input }];
     setMessages(newMessages);
     setInput("");
     setShowWelcome(false);
@@ -142,35 +137,28 @@ export default function Home() {
           body: JSON.stringify({ input }),
         });
         const imgData = await imgRes.json();
-        if (imgData && imgData.image) {
+        if (imgData?.image) {
           reply += `\n![Generated Image](${imgData.image})`;
         }
       }
 
-      const newAssistantMessage = { role: "assistant", content: reply };
-      const updatedMessages = [...messages, newAssistantMessage];
+      const newAssistantMessage: Message = { role: "assistant", content: reply };
+      const updatedMessages: Message[] = [...messages, newAssistantMessage];
       setMessages(updatedMessages);
 
-      setFolders(prevFolders => {
-        return prevFolders.map(folder => {
-          if (folder.id === activeFolder || (folder.id === 'all' && activeFolder !== 'all')) {
-            return {
-              ...folder,
-              chats: [...folder.chats, updatedMessages]
-            };
-          }
-          return folder;
-        });
-      });
+      setFolders(prevFolders =>
+        prevFolders.map(folder =>
+          folder.id === activeFolder || (folder.id === 'all' && activeFolder !== 'all')
+            ? { ...folder, chats: [...folder.chats, updatedMessages as Message[]] }
+            : folder
+        )
+      );
 
       setIsLoading(false);
     } catch (error) {
       console.error("Error occurred:", error);
       const errorMessage = (error instanceof Error && error.message) || "Unknown error occurred";
-      setMessages(prev => [
-        ...prev,
-        { role: "assistant", content: `Error: ${errorMessage}` },
-      ]);
+      setMessages(prev => [...prev, { role: "assistant", content: `Error: ${errorMessage}` } as Message]);
       setIsLoading(false);
     }
   };
@@ -184,11 +172,9 @@ export default function Home() {
   return (
     <div className="chat-container">
       <aside className="sidebar">
-        <div className="sidebar-header">
-          <h2>Study Nova</h2>
-        </div>
+        <div className="sidebar-header"><h2>Study Nova</h2></div>
         <div className="folder-list">
-          {folders.map((folder) => (
+          {folders.map(folder => (
             <div
               key={folder.id}
               className={`folder ${activeFolder === folder.id ? 'active' : ''}`}
@@ -196,32 +182,21 @@ export default function Home() {
             >
               <span className="folder-icon">{folder.icon}</span>
               <span className="folder-name">{folder.name}</span>
-              {folder.chats.length > 0 && (
-                <span className="chat-count">{folder.chats.length}</span>
-              )}
+              {folder.chats.length > 0 && <span className="chat-count">{folder.chats.length}</span>}
             </div>
           ))}
         </div>
       </aside>
 
       <div className="main-content">
-        <header className="chat-header">
-          <h1 className="site-title">Study Nova Bot</h1>
-        </header>
+        <header className="chat-header"><h1 className="site-title">Study Nova Bot</h1></header>
 
         <main className="main-container">
           <div className={`chat-interface${showWelcome ? ' welcome-mode' : ''}`}>
             <div className="messages-container">
-              {showWelcome ? (
-                <div className="welcome-container">
-                  <h1>What can I help with?</h1>
-                </div>
-              ) : null}
+              {showWelcome && <div className="welcome-container"><h1>What can I help with?</h1></div>}
               {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}
-                >
+                <div key={index} className={`message ${message.role === 'user' ? 'user-message' : 'bot-message'}`}>
                   <div className="message-content">
                     {message.role === 'assistant' ? (
                       <BotMessageRenderer message={message.content} animate={index === messages.length - 1 && isLoading} />
@@ -233,13 +208,8 @@ export default function Home() {
               ))}
               <div ref={messagesEndRef} />
             </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="input-container"
-            >
+
+            <form onSubmit={handleSend} className="input-container">
               <div className="input-wrapper">
                 <input
                   type="text"
@@ -256,38 +226,24 @@ export default function Home() {
                   disabled={isLoading}
                   ref={inputRef}
                 />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className="send-button"
-                >
+                <button type="submit" disabled={!input.trim() || isLoading} className="send-button">
                   {isLoading ? '...' : '→'}
                 </button>
               </div>
             </form>
           </div>
+
           <div className="suggestions">
-            <button 
-              className="suggestion-btn"
-              onClick={() => handleSuggestionClick("Create an image of a beautiful sunset over mountains")}>
+            <button className="suggestion-btn" onClick={() => handleSuggestionClick("Create an image of a beautiful sunset over mountains")}>
               <span className="icon">🎨</span> Create image
             </button>
-            <button 
-              className="suggestion-btn"
-              onClick={() => handleSuggestionClick("Help me brainstorm ideas for a science fiction story")}
-            >
+            <button className="suggestion-btn" onClick={() => handleSuggestionClick("Help me brainstorm ideas for a science fiction story")}>
               <span className="icon">💡</span> Brainstorm
             </button>
-            <button 
-              className="suggestion-btn"
-              onClick={() => handleSuggestionClick("Help me write a professional email to schedule a meeting")}
-            >
+            <button className="suggestion-btn" onClick={() => handleSuggestionClick("Help me write a professional email to schedule a meeting")}>
               <span className="icon">✍️</span> Help me write
             </button>
-            <button 
-              className="suggestion-btn"
-              onClick={() => handleSuggestionClick("Summarize this text: [paste your text here]")}
-            >
+            <button className="suggestion-btn" onClick={() => handleSuggestionClick("Summarize this text: [paste your text here]")}>
               <span className="icon">📝</span> Summarize text
             </button>
           </div>
