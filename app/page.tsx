@@ -21,7 +21,7 @@ function parseBotMessage(raw: string): Block[] {
   // Split lines, look for bullet/number patterns, and image URLs
   const lines = raw.split(/\r?\n/).filter(line => line.trim() !== '');
   const blocks: Block[] = [];
-  for (let line of lines) {
+  for (const line of lines) {
     // Simple image detection (e.g., if line contains [Image: ...](url) or starts with http...jpg/png)
     const imgMatch = line.match(/!\[.*?\]\((.*?)\)/) || line.match(/(https?:\/\/\S+\.(jpg|jpeg|png|gif))/);
     if (imgMatch) {
@@ -29,9 +29,9 @@ function parseBotMessage(raw: string): Block[] {
       continue;
     }
     // Emoji-rich bullets/numbers
-    if (/^\d+[\.|\)]/.test(line)) {
+    if (/^\d+[.)]/.test(line)) {
       // Numbered list
-      blocks.push({ type: 'text', content: `🔢 ${line.replace(/^\d+[\.|\)]\s*/, '')}` });
+      blocks.push({ type: 'text', content: `🔢 ${line.replace(/^\d+[.)]\s*/, '')}` });
     } else if (/^[-*•]/.test(line)) {
       // Bullet list
       blocks.push({ type: 'text', content: `👉 ${line.replace(/^[-*•]\s*/, '')}` });
@@ -146,7 +146,7 @@ export default function Home() {
       const data = await response.json();
 
       if (!response.ok) {
-        let errorMsg = typeof data.error === "string" ? data.error : JSON.stringify(data.error);
+        const errorMsg = typeof data.error === "string" ? data.error : JSON.stringify(data.error);
 throw new Error(errorMsg || "Unknown error occurred");
       }
 

@@ -1,4 +1,6 @@
 {
+  "/api/genImage/route": "app/api/genImage/route.js",
   "/api/chat/route": "app/api/chat/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/page": "app/page.js"
 }

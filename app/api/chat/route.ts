@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
     // Handle external API errors
     if (!response.ok) {
-      let errorData: any = {};
+      let errorData: { error?: string } = {};
       try {
         errorData = await response.json();
       } catch {
