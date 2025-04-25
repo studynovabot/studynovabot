@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from "react";
-import Image from "next/image";
 
 type Message = {
   role: "user" | "assistant";
@@ -83,7 +82,8 @@ function BotMessageRenderer({ message, animate }: { message: string, animate?: b
           <div key={idx} style={{whiteSpace: 'pre-line', marginBottom: 4}}>{block}</div>
         ) : (
           <div key={idx} style={{margin: '10px 0'}}>
-            <Image src={block.url} alt="Generated visual" width={400} height={300} style={{maxWidth: '100%', borderRadius: 8}} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={block.url} alt="Generated visual" style={{maxWidth: '100%', borderRadius: 8}} />
           </div>
         )
       )}

@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 
+type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
+type GroqError = { error?: string };
+type GroqResponse = { choices: { message: { content: string } }[] };
+
 export async function POST(req: Request) {
   try {
     // Parse the request body
-    const body = await req.json();
+    const body = (await req.json()) as { messages: ChatMessage[] };
     const { messages } = body;
 
     // Validate the `messages` array
@@ -46,9 +50,10 @@ export async function POST(req: Request) {
 
     // Handle external API errors
     if (!response.ok) {
-      let errorData: { error?: string } = {};
+      let errorData: GroqError = {};
       try {
-        errorData = await response.json();
+        const rawErr: unknown = await response.json();
+        errorData = rawErr as GroqError;
       } catch {
         const errorText = await response.text();
         errorData = { error: errorText };
@@ -60,7 +65,8 @@ export async function POST(req: Request) {
     }
 
     // Parse and return the successful response
-    const data = await response.json();
+    const rawData: unknown = await response.json();
+    const data: GroqResponse = rawData as GroqResponse;
     return NextResponse.json({ reply: data.choices[0]?.message?.content || "No response from AI." });
   } catch (error) {
     console.error("Error occurred:", error); // Fixed unused variable error
