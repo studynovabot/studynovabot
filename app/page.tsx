@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 
 type Message = {
   role: "user" | "assistant";
@@ -82,7 +83,7 @@ function BotMessageRenderer({ message, animate }: { message: string, animate?: b
           <div key={idx} style={{whiteSpace: 'pre-line', marginBottom: 4}}>{block}</div>
         ) : (
           <div key={idx} style={{margin: '10px 0'}}>
-            <img src={block.url} alt="Generated visual" style={{maxWidth: '100%', borderRadius: 8}} />
+            <Image src={block.url} alt="Generated visual" width={400} height={300} style={{maxWidth: '100%', borderRadius: 8}} />
           </div>
         )
       )}
@@ -147,7 +148,7 @@ export default function Home() {
 
       if (!response.ok) {
         const errorMsg = typeof data.error === "string" ? data.error : JSON.stringify(data.error);
-throw new Error(errorMsg || "Unknown error occurred");
+        throw new Error(errorMsg || "Unknown error occurred");
       }
 
       // --- Image generation logic ---
