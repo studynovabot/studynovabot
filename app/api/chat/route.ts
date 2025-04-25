@@ -69,11 +69,10 @@ export async function POST(req: Request) {
     }
 
     // Parse and return the successful response
-    const rawData: unknown = await response.json();
-    const data: GroqResponse = rawData as GroqResponse;
+    const data: GroqResponse = await response.json() as GroqResponse;
     return NextResponse.json({ reply: data.choices[0]?.message?.content || "No response from AI." });
   } catch (error) {
-    console.error("Error occurred:", error); // Fixed unused variable error
+    console.error("Error occurred:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

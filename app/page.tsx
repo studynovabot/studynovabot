@@ -27,9 +27,9 @@ function parseBotMessage(raw: string): Block[] {
       continue;
     }
     if (/^\d+[.)]/.test(line)) {
-      blocks.push({ type: 'text', content: `🔢 ${line.replace(/^\d+[.)]\s*/, '')}` });
+      blocks.push({ type: 'text', content: `🔢 ${line.replace(/^\d+[.)]\\s*/, '')}` });
     } else if (/^[-*•]/.test(line)) {
-      blocks.push({ type: 'text', content: `👉 ${line.replace(/^[-*•]\s*/, '')}` });
+      blocks.push({ type: 'text', content: `👉 ${line.replace(/^[-*•]\\s*/, '')}` });
     } else {
       blocks.push({ type: 'text', content: `🤖 ${line}` });
     }
@@ -57,7 +57,7 @@ function BotMessageRenderer({ message, animate }: { message: string, animate?: b
       setTimeout(showNext, 400);
     }
     showNext();
-  }, [blocks, animate]); // ✅ blocks added to dependencies
+  }, [blocks, animate]);
 
   return (
     <div>
@@ -143,7 +143,7 @@ export default function Home() {
       }
 
       const newAssistantMessage: Message = { role: "assistant", content: reply };
-      const updatedMessages: Message[] = [...messages, newAssistantMessage];
+      const updatedMessages: Message[] = [...newMessages, newAssistantMessage];
       setMessages(updatedMessages);
 
       setFolders(prevFolders =>

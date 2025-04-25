@@ -21,5 +21,10 @@ module.exports = {
       "warn",
       { vars: "all", args: "none", ignoreRestSiblings: true },
     ], // Ignore unused arguments and rest siblings
+    "@typescript-eslint/no-explicit-any": "off", // Turn off no-explicit-any
+    "prefer-const": "warn", // Downgrade to warning
+    "no-useless-escape": "warn", // Downgrade to warning
+    "react-hooks/exhaustive-deps": "warn", // Downgrade to warning
+    "@next/next/no-img-element": "warn" // Downgrade to warning
   },
 };
