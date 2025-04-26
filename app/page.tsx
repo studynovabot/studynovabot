@@ -75,6 +75,25 @@ function BotMessageRenderer({ message, animate }: { message: string, animate?: b
 }
 
 export default function Home() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Close sidebar on route change or overlay click (for mobile)
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSidebarOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [sidebarOpen]);
+
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.classList.remove('sidebar-open');
+    }
+  }, [sidebarOpen]);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -171,7 +190,25 @@ export default function Home() {
 
   return (
     <div className="chat-container">
-      <aside className="sidebar">
+      <button
+        className="hamburger"
+        aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+        onClick={() => setSidebarOpen(s => !s)}
+      >
+        {sidebarOpen ? '✖' : '☰'}
+      </button>
+      {/* Overlay for mobile sidebar */}
+      {sidebarOpen && (
+        <div
+          style={{
+            position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.3)', zIndex: 999
+          }}
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Close sidebar overlay"
+        />
+      )}
+
+      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="sidebar-header"><h2>Study Nova</h2></div>
         <div className="folder-list">
           {folders.map(folder => (
