@@ -36,40 +36,42 @@ export async function POST(req: Request) {
     }
 
     // Forward the request to the external AI service
-    const response = await fetch(process.env.GROQ_API_URL!, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`, // Use your Groq API key
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: process.env.GROQ_MODEL!,
-        messages,
-      }),
-    });
+    let externalRes: Response;
+    try {
+      externalRes = await fetch(process.env.GROQ_API_URL!, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ model: process.env.GROQ_MODEL!, messages }),
+      });
+    } catch (fetchError) {
+      console.error("Error fetching Groq API:", fetchError);
+      return NextResponse.json(
+        { error: "Failed to connect to AI service." },
+        { status: 502 }
+      );
+    }
 
     // Handle external API errors
-    if (!response.ok) {
-      let errorData: GroqError = {};
+    if (!externalRes.ok) {
+      const errorText = await externalRes.text();
+      let errorMsg = errorText;
       try {
-        const parsed = await response.json();
-        if (typeof parsed === 'object' && parsed !== null && 'error' in parsed) {
-          errorData = { error: String((parsed as { error: unknown }).error) };
-        } else {
-          errorData = { error: JSON.stringify(parsed) };
+        const parsed = JSON.parse(errorText);
+        if (parsed && typeof parsed === 'object' && 'error' in parsed) {
+          errorMsg = String((parsed as any).error);
         }
-      } catch {
-        const errorText = await response.text();
-        errorData = { error: errorText };
-      }
+      } catch {}
       return NextResponse.json(
-        { error: errorData.error || "Failed to fetch response from Groq API." },
-        { status: response.status }
+        { error: errorMsg || "Failed to fetch response from AI service." },
+        { status: externalRes.status }
       );
     }
 
     // Parse and return the successful response
-    const data: GroqResponse = await response.json() as GroqResponse;
+    const data: GroqResponse = (await externalRes.json()) as GroqResponse;
     return NextResponse.json({ reply: data.choices[0]?.message?.content || "No response from AI." });
   } catch (error) {
     console.error("Error occurred:", error);

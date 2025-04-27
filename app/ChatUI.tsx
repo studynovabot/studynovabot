@@ -61,15 +61,20 @@ function BotMessageRenderer({ message, animate }: { message: string, animate?: b
 
   return (
     <div>
-      {displayed.map((block, idx) =>
-        typeof block === 'string' ? (
-          <div key={idx} style={{ whiteSpace: 'pre-line', marginBottom: 4 }}>{block}</div>
-        ) : (
-          <div key={idx} style={{ margin: '10px 0' }}>
-            <Image src={block.url} alt="Generated visual" width={600} height={400} style={{ maxWidth: '100%', borderRadius: 8 }} />
-          </div>
-        )
-      )}
+      {displayed.map((block, idx) => {
+        if (typeof block === 'string') {
+          return <div key={idx} style={{ whiteSpace: 'pre-line', marginBottom: 4 }}>{block}</div>;
+        } else if (typeof block.url === 'string' && block.url.startsWith('data:image/')) {
+          return (
+            <div key={idx} style={{ margin: '10px 0' }}>
+              <img src={block.url} alt="Generated visual" style={{ maxWidth: '100%', borderRadius: 8 }} />
+            </div>
+          );
+        } else {
+          // If not a valid image URL, render as text for debugging
+          return <div key={idx} style={{ color: 'red', marginBottom: 4 }}>[Image generation failed or invalid image]</div>;
+        }
+      })}
     </div>
   );
 }
@@ -140,6 +145,39 @@ export default function ChatUI({ user }: { user: any }) {
     setShowWelcome(false);
     setIsLoading(true);
 
+    // Check if the user prompt is an image request
+    const isImagePrompt = /image|draw|picture|visual|photo|generate|create.*image|\[image\]/i.test(input);
+    let updatedMessages = [...newMessages];
+
+    if (isImagePrompt) {
+      try {
+        const imgRes = await fetch('/api/genImage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input }),
+        });
+        const imgData = await imgRes.json();
+        if (imgData?.image) {
+          // Valid generated image
+          updatedMessages = [...updatedMessages, { role: "assistant", content: `![Generated Image](${imgData.image})` }];
+          setMessages(updatedMessages);
+        } else if (imgData?.error) {
+          // Show the error returned by backend
+          updatedMessages = [...updatedMessages, { role: "assistant", content: `[Image generation failed: ${imgData.error}]` }];
+          setMessages(updatedMessages);
+        } else {
+          // Generic failure
+          updatedMessages = [...updatedMessages, { role: "assistant", content: `[Image generation failed or invalid image]` }];
+          setMessages(updatedMessages);
+        }
+      } catch (err) {
+        updatedMessages = [...updatedMessages, { role: "assistant", content: `[Image generation failed: ${err}]` }];
+        setMessages(updatedMessages);
+      }
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -152,24 +190,13 @@ export default function ChatUI({ user }: { user: any }) {
         throw new Error(errorMsg || "Unknown error occurred");
       }
       let reply = data.reply || "No response from AI.";
-      if (/image|draw|picture|visual|photo|generate|create.*image/i.test(input) || /\[image\]/i.test(reply)) {
-        const imgRes = await fetch('/api/genImage', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input }),
-        });
-        const imgData = await imgRes.json();
-        if (imgData?.image) {
-          reply += `\n![Generated Image](${imgData.image})`;
-        }
-      }
       const newAssistantMessage: Message = { role: "assistant", content: reply };
-      const updatedMessages: Message[] = [...newMessages, newAssistantMessage];
-      setMessages(updatedMessages);
+      const finalMessages: Message[] = [...updatedMessages, newAssistantMessage];
+      setMessages(finalMessages);
       setFolders(prevFolders =>
         prevFolders.map(folder =>
           folder.id === activeFolder || (folder.id === 'all' && activeFolder !== 'all')
-            ? { ...folder, chats: [...folder.chats, updatedMessages as Message[]] }
+            ? { ...folder, chats: [...folder.chats, finalMessages as Message[]] }
             : folder
         )
       );

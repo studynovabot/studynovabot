@@ -11,10 +11,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/api/chat/route": [
+    "/api/genImage/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/chat/route.js"
+      "static/chunks/app/api/genImage/route.js"
     ]
   }
 }
