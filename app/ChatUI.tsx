@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import Image from "next/image";
 
 // Types (reuse from your original page.tsx)
 type Message = {
@@ -91,6 +90,7 @@ export default function ChatUI({ user }: { user: any }) {
     { id: "study", name: "Study", icon: "📚", chats: [] },
     { id: "code", name: "Code", icon: "💻", chats: [] },
   ]);
+  const [lastImagePrompt, setLastImagePrompt] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -139,49 +139,30 @@ export default function ChatUI({ user }: { user: any }) {
     if (e) e.preventDefault();
     if (!input.trim()) return;
 
-    // Filter out messages containing base64 images before sending to /api/chat
-    const filteredMessages = messages.filter(msg => !msg.content.includes('data:image/'));
-    const newMessages: Message[] = [...filteredMessages, { role: "user", content: input }];
-    setMessages([...messages, { role: "user", content: input }]);
+    const filteredMessages = messages.filter(msg => !msg.content.startsWith('data:image/'));
+    const newMessages: Message[] = [...filteredMessages, { role: 'user', content: input }];
+    setMessages(prev => [...prev, { role: 'user', content: input }]);
     setInput("");
     setShowWelcome(false);
     setIsLoading(true);
 
-    // Check if the user prompt is an image request or an image improvement request
-    const isImagePrompt = /image|draw|picture|visual|photo|generate|create.*image|\[image\]/i.test(input);
-    const isUpgradePrompt = /more cute|improve|upgrade|make.*better|add|change|modify/i.test(input);
+    const isImagePrompt = /(?:\bcreate\b|\brecreate\b|\bmake\b|\bgenerate\b|\bdraw\b|\bimage\b)/i.test(input);
+    const isUpgradePrompt = /(?:edit|change|fix|adjust|modify|improve|upgrade|should)/i.test(input);
     let updatedMessages = [...newMessages];
 
-    // If the user wants to upgrade/improve the last image, combine last image prompt with user's new instruction
-    if (isUpgradePrompt) {
-      // Find the last user message that triggered an image generation
-      const lastImagePromptMsg = [...messages].reverse().find(msg => msg.role === 'user' && /image|draw|picture|visual|photo|generate|create.*image|\[image\]/i.test(msg.content));
-      if (lastImagePromptMsg) {
-        const upgradedPrompt = `${lastImagePromptMsg.content}, ${input}`;
-        try {
-          const imgRes = await fetch('/api/genImage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ input: upgradedPrompt }),
-          });
-          const imgData = await imgRes.json();
-          if (imgData?.image) {
-            updatedMessages = [...messages, { role: "user", content: input }, { role: "assistant", content: `![Generated Image](${imgData.image})` }];
-            setMessages(updatedMessages);
-          } else if (imgData?.error) {
-            updatedMessages = [...messages, { role: "user", content: input }, { role: "assistant", content: `[Image generation failed: ${imgData.error}]` }];
-            setMessages(updatedMessages);
-          } else {
-            updatedMessages = [...messages, { role: "user", content: input }, { role: "assistant", content: `[Image generation failed or invalid image]` }];
-            setMessages(updatedMessages);
-          }
-        } catch (err) {
-          updatedMessages = [...messages, { role: "user", content: input }, { role: "assistant", content: `[Image generation failed: ${err}]` }];
-          setMessages(updatedMessages);
-        }
-        setIsLoading(false);
-        return;
+    if (isUpgradePrompt && lastImagePrompt) {
+      const prompt = `${lastImagePrompt}, ${input}`;
+      try {
+        const imgRes = await fetch('/api/genImage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ input: prompt }) });
+        const imgData = await imgRes.json();
+        const assistantContent = imgData.image ? `![Generated Image](${imgData.image})` : imgData.error ? `[Image generation failed: ${imgData.error}]` : `[Image generation failed]`;
+        if (imgData.image) setLastImagePrompt(prompt);
+        setMessages(prev => [...prev, { role: 'assistant', content: assistantContent }]);
+      } catch (err) {
+        setMessages(prev => [...prev, { role: 'assistant', content: `[Image generation failed: ${err}]` }]);
       }
+      setIsLoading(false);
+      return;
     }
 
     if (isImagePrompt) {
@@ -193,21 +174,15 @@ export default function ChatUI({ user }: { user: any }) {
         });
         const imgData = await imgRes.json();
         if (imgData?.image) {
-          // Valid generated image
-          updatedMessages = [...updatedMessages, { role: "assistant", content: `![Generated Image](${imgData.image})` }];
-          setMessages(updatedMessages);
+          setMessages(prev => [...prev, { role: 'assistant', content: `![Generated Image](${imgData.image})` }]);
+          setLastImagePrompt(input);
         } else if (imgData?.error) {
-          // Show the error returned by backend
-          updatedMessages = [...updatedMessages, { role: "assistant", content: `[Image generation failed: ${imgData.error}]` }];
-          setMessages(updatedMessages);
+          setMessages(prev => [...prev, { role: 'assistant', content: `[Image generation failed: ${imgData.error}]` }]);
         } else {
-          // Generic failure
-          updatedMessages = [...updatedMessages, { role: "assistant", content: `[Image generation failed or invalid image]` }];
-          setMessages(updatedMessages);
+          setMessages(prev => [...prev, { role: 'assistant', content: `[Image generation failed or invalid image]` }]);
         }
       } catch (err) {
-        updatedMessages = [...updatedMessages, { role: "assistant", content: `[Image generation failed: ${err}]` }];
-        setMessages(updatedMessages);
+        setMessages(prev => [...prev, { role: 'assistant', content: `[Image generation failed: ${err}]` }]);
       }
       setIsLoading(false);
       return;
@@ -221,15 +196,26 @@ export default function ChatUI({ user }: { user: any }) {
       });
       const data = await response.json();
       if (!response.ok) {
-        const errorMsg = typeof data.error === "string" ? data.error : JSON.stringify(data.error);
-        throw new Error(errorMsg || "Unknown error occurred");
+        let errorMsg = "Unknown error occurred";
+        if (data && data.error) {
+          if (typeof data.error === "string") {
+            errorMsg = data.error;
+          } else if (typeof data.error === "object") {
+            errorMsg = JSON.stringify(data.error);
+          }
+        } else if (typeof data === "object") {
+          errorMsg = JSON.stringify(data);
+        }
+        setMessages(prev => [...prev, { role: "assistant", content: `Error: ${errorMsg}` }]);
+        setIsLoading(false);
+        return;
       }
-      let reply = data.reply || "No response from AI.";
+      const reply = data.reply || "No response from AI.";
       const newAssistantMessage: Message = { role: "assistant", content: reply };
       const finalMessages: Message[] = [...updatedMessages, newAssistantMessage];
       setMessages(finalMessages);
-      setFolders(prevFolders =>
-        prevFolders.map(folder =>
+      setFolders(prev =>
+        prev.map(folder =>
           folder.id === activeFolder || (folder.id === 'all' && activeFolder !== 'all')
             ? { ...folder, chats: [...folder.chats, finalMessages as Message[]] }
             : folder
@@ -239,7 +225,7 @@ export default function ChatUI({ user }: { user: any }) {
     } catch (error) {
       console.error("Error occurred:", error);
       const errorMessage = (error instanceof Error && error.message) || "Unknown error occurred";
-      setMessages(prev => [...prev, { role: "assistant", content: `Error: ${errorMessage}` } as Message]);
+      setMessages(prev => [...prev, { role: "assistant", content: `Error: ${errorMessage}` }]);
       setIsLoading(false);
     }
   };
