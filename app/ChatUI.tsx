@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import Image from 'next/image';
 
 // Types (reuse from your original page.tsx)
 type Message = {
@@ -65,8 +66,14 @@ function BotMessageRenderer({ message, animate }: { message: string, animate?: b
           return <div key={idx} style={{ whiteSpace: 'pre-line', marginBottom: 4 }}>{block}</div>;
         } else if (typeof block.url === 'string' && block.url.startsWith('data:image/')) {
           return (
-            <div key={idx} style={{ margin: '10px 0' }}>
-              <img src={block.url} alt="Generated visual" style={{ maxWidth: '100%', borderRadius: 8 }} />
+            <div key={idx} className="relative w-full aspect-square">
+              <Image 
+                src={block.url.replace('data:image/png;base64,', '')} 
+                alt="Generated visual" 
+                fill
+                className="rounded-lg object-contain"
+                unoptimized
+              />
             </div>
           );
         } else {
@@ -149,7 +156,7 @@ export default function ChatUI({ user }: { user: any }) {
 
     const isImagePrompt = !isProcessingImage && /(?:\bcreate\b|\brecreate\b|\bmake\b|\bgenerate\b|\bdraw\b|\bimage\b)/i.test(input);
     const isUpgradePrompt = /(?:edit|change|fix|adjust|modify|improve|upgrade|should|more\s+cute|cute)/i.test(input);
-    let updatedMessages = [...newMessages];
+    const updatedMessages = [...newMessages];
 
     if (isUpgradePrompt && lastImagePrompt) {
       setIsProcessingImage(true);
@@ -197,7 +204,7 @@ export default function ChatUI({ user }: { user: any }) {
 
     // Keep last 3 messages + current input to avoid token limits
     const optimizedMessages = messages
-      .filter(msg => msg.role !== 'system')
+      .filter(msg => msg.role === 'user' || msg.role === 'assistant')
       .slice(-3)
       .map(msg => ({
         role: msg.role,

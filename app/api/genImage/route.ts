@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Prompt engineering: clarify for the AI
-    let originalInput = input;
     // If the prompt seems like an edit instruction, prepend context
     if (/edit|change|fix|adjust|modify|improve|upgrade|should/i.test(input)) {
       input = `You are an expert image generator. Please edit the previous image as follows: ${input}. Be anatomically correct. Do not merge body parts. Do not make ant legs on a tiger. Only change what is requested, keep all other details as in the previous image.`;
