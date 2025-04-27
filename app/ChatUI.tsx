@@ -91,6 +91,7 @@ export default function ChatUI({ user }: { user: any }) {
     { id: "code", name: "Code", icon: "💻", chats: [] },
   ]);
   const [lastImagePrompt, setLastImagePrompt] = useState<string | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -139,18 +140,19 @@ export default function ChatUI({ user }: { user: any }) {
     if (e) e.preventDefault();
     if (!input.trim()) return;
 
-    const filteredMessages = messages.filter(msg => !msg.content.startsWith('data:image/'));
+    const filteredMessages = [...messages];
     const newMessages: Message[] = [...filteredMessages, { role: 'user', content: input }];
     setMessages(prev => [...prev, { role: 'user', content: input }]);
     setInput("");
     setShowWelcome(false);
     setIsLoading(true);
 
-    const isImagePrompt = /(?:\bcreate\b|\brecreate\b|\bmake\b|\bgenerate\b|\bdraw\b|\bimage\b)/i.test(input);
-    const isUpgradePrompt = /(?:edit|change|fix|adjust|modify|improve|upgrade|should)/i.test(input);
+    const isImagePrompt = !isProcessingImage && /(?:\bcreate\b|\brecreate\b|\bmake\b|\bgenerate\b|\bdraw\b|\bimage\b)/i.test(input);
+    const isUpgradePrompt = /(?:edit|change|fix|adjust|modify|improve|upgrade|should|more\s+cute|cute)/i.test(input);
     let updatedMessages = [...newMessages];
 
     if (isUpgradePrompt && lastImagePrompt) {
+      setIsProcessingImage(true);
       const prompt = `${lastImagePrompt}, ${input}`;
       try {
         const imgRes = await fetch('/api/genImage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ input: prompt }) });
@@ -159,13 +161,16 @@ export default function ChatUI({ user }: { user: any }) {
         if (imgData.image) setLastImagePrompt(prompt);
         setMessages(prev => [...prev, { role: 'assistant', content: assistantContent }]);
       } catch (err) {
-        setMessages(prev => [...prev, { role: 'assistant', content: `[Image generation failed: ${err}]` }]);
+        const msgErr = err instanceof Error ? err.message : JSON.stringify(err);
+        setMessages(prev => [...prev, { role: 'assistant', content: `[Image generation failed: ${msgErr}]` }]);
       }
+      setIsProcessingImage(false);
       setIsLoading(false);
       return;
     }
 
     if (isImagePrompt) {
+      setIsProcessingImage(true);
       try {
         const imgRes = await fetch('/api/genImage', {
           method: 'POST',
@@ -182,17 +187,29 @@ export default function ChatUI({ user }: { user: any }) {
           setMessages(prev => [...prev, { role: 'assistant', content: `[Image generation failed or invalid image]` }]);
         }
       } catch (err) {
-        setMessages(prev => [...prev, { role: 'assistant', content: `[Image generation failed: ${err}]` }]);
+        const msgErr2 = err instanceof Error ? err.message : JSON.stringify(err);
+        setMessages(prev => [...prev, { role: 'assistant', content: `[Image generation failed: ${msgErr2}]` }]);
       }
+      setIsProcessingImage(false);
       setIsLoading(false);
       return;
     }
+
+    // Keep last 3 messages + current input to avoid token limits
+    const optimizedMessages = messages
+      .filter(msg => msg.role !== 'system')
+      .slice(-3)
+      .map(msg => ({
+        role: msg.role,
+        content: msg.content.replace(/!\[.*?]\(.*?\)/g, '[image]')
+      }));
+    optimizedMessages.push({ role: 'user', content: input });
 
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: optimizedMessages }),
       });
       const data = await response.json();
       if (!response.ok) {

@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 type GroqResponse = { choices: { message: { content: string } }[] };
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     // Parse the request body
     const body = (await req.json()) as { messages: ChatMessage[] };
@@ -55,18 +55,26 @@ export async function POST(req: Request) {
 
     // Handle external API errors
     if (!externalRes.ok) {
+      let errorMsg = 'Failed to fetch response from AI service.';
       const errorText = await externalRes.text();
-      let errorMsg = errorText;
       try {
         const parsed = JSON.parse(errorText);
-        if (parsed && typeof parsed === 'object' && 'error' in parsed) {
-          errorMsg = String((parsed as any).error);
+        if (parsed.error) {
+          if (typeof parsed.error === 'string') {
+            errorMsg = parsed.error;
+          } else if (typeof parsed.error === 'object') {
+            errorMsg = (parsed.error.message as string) || JSON.stringify(parsed.error);
+          }
+        } else if ((parsed as any).message) {
+          errorMsg = (parsed as any).message;
+        } else {
+          errorMsg = JSON.stringify(parsed);
         }
-      } catch (err) {
-        // ignore JSON parse errors
+      } catch {
+        errorMsg = errorText;
       }
       return NextResponse.json(
-        { error: errorMsg || "Failed to fetch response from AI service." },
+        { error: errorMsg },
         { status: externalRes.status }
       );
     }
