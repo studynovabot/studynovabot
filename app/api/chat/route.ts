@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
-type GroqError = { error?: string };
 type GroqResponse = { choices: { message: { content: string } }[] };
 
 export async function POST(req: Request) {
@@ -63,7 +62,9 @@ export async function POST(req: Request) {
         if (parsed && typeof parsed === 'object' && 'error' in parsed) {
           errorMsg = String((parsed as any).error);
         }
-      } catch {}
+      } catch (err) {
+        // ignore JSON parse errors
+      }
       return NextResponse.json(
         { error: errorMsg || "Failed to fetch response from AI service." },
         { status: externalRes.status }
