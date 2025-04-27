@@ -139,15 +139,50 @@ export default function ChatUI({ user }: { user: any }) {
     if (e) e.preventDefault();
     if (!input.trim()) return;
 
-    const newMessages: Message[] = [...messages, { role: "user", content: input }];
-    setMessages(newMessages);
+    // Filter out messages containing base64 images before sending to /api/chat
+    const filteredMessages = messages.filter(msg => !msg.content.includes('data:image/'));
+    const newMessages: Message[] = [...filteredMessages, { role: "user", content: input }];
+    setMessages([...messages, { role: "user", content: input }]);
     setInput("");
     setShowWelcome(false);
     setIsLoading(true);
 
-    // Check if the user prompt is an image request
+    // Check if the user prompt is an image request or an image improvement request
     const isImagePrompt = /image|draw|picture|visual|photo|generate|create.*image|\[image\]/i.test(input);
+    const isUpgradePrompt = /more cute|improve|upgrade|make.*better|add|change|modify/i.test(input);
     let updatedMessages = [...newMessages];
+
+    // If the user wants to upgrade/improve the last image, combine last image prompt with user's new instruction
+    if (isUpgradePrompt) {
+      // Find the last user message that triggered an image generation
+      const lastImagePromptMsg = [...messages].reverse().find(msg => msg.role === 'user' && /image|draw|picture|visual|photo|generate|create.*image|\[image\]/i.test(msg.content));
+      if (lastImagePromptMsg) {
+        const upgradedPrompt = `${lastImagePromptMsg.content}, ${input}`;
+        try {
+          const imgRes = await fetch('/api/genImage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ input: upgradedPrompt }),
+          });
+          const imgData = await imgRes.json();
+          if (imgData?.image) {
+            updatedMessages = [...messages, { role: "user", content: input }, { role: "assistant", content: `![Generated Image](${imgData.image})` }];
+            setMessages(updatedMessages);
+          } else if (imgData?.error) {
+            updatedMessages = [...messages, { role: "user", content: input }, { role: "assistant", content: `[Image generation failed: ${imgData.error}]` }];
+            setMessages(updatedMessages);
+          } else {
+            updatedMessages = [...messages, { role: "user", content: input }, { role: "assistant", content: `[Image generation failed or invalid image]` }];
+            setMessages(updatedMessages);
+          }
+        } catch (err) {
+          updatedMessages = [...messages, { role: "user", content: input }, { role: "assistant", content: `[Image generation failed: ${err}]` }];
+          setMessages(updatedMessages);
+        }
+        setIsLoading(false);
+        return;
+      }
+    }
 
     if (isImagePrompt) {
       try {
