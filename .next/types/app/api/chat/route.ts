@@ -1,4 +1,4 @@
-// File: E:\cascade\CascadeProjects\windsurf-project\studynovabot-final\app\api\chat\route.ts
+// File: e:\cascade\CascadeProjects\windsurf-project\studynovabot-final\app\api\chat\route.ts
 import * as entry from '../../../../../app/api/chat/route.js'
 import type { NextRequest } from 'next/server.js'
 

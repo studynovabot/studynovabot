@@ -1,4 +1,4 @@
-// File: E:\cascade\CascadeProjects\windsurf-project\studynovabot-final\app\api\genImage\route.ts
+// File: e:\cascade\CascadeProjects\windsurf-project\studynovabot-final\app\api\genImage\route.ts
 import * as entry from '../../../../../app/api/genImage/route.js'
 import type { NextRequest } from 'next/server.js'
 
