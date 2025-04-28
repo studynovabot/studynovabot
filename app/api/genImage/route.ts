@@ -20,7 +20,10 @@ export async function POST(req: NextRequest) {
       input = `Create a high quality, detailed, photorealistic image: ${input}. Be anatomically correct. Do not merge body parts. Do not make ant legs on a tiger. Only show what is described.`;
     }
 
-    const STABILITY_API_KEY = process.env.STABILITY_API_KEY || 'sk-AZI41yJxFefETni1iElqrHtI0Q7OvvNMORi92BtfMUzBtfTR';
+    const STABILITY_API_KEY = process.env.STABILITY_API_KEY;
+    if (!STABILITY_API_KEY) {
+      return NextResponse.json({ error: 'STABILITY_API_KEY is not configured' }, { status: 500 });
+    }
     // Use the stable-diffusion v1.6 endpoint for compatibility
     const STABILITY_API_URL = 'https://api.stability.ai/v1/generation/stable-diffusion-v1-6/text-to-image';
 
@@ -63,8 +66,7 @@ export async function POST(req: NextRequest) {
     if (!base64) {
       return NextResponse.json({ error: 'No image returned from Stability AI' }, { status: 500 });
     }
-    const image = `data:image/png;base64,${base64}`;
-    return NextResponse.json({ image }, { status: 200 });
+    return NextResponse.json({ image: base64 }, { status: 200 });
   } catch (error) {
     console.error("Error generating image:", error);
     let errMsg = "Internal Server Error";
